@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "keycaps",
+  "version": "${version}",
+  "name": "Keycaps",
+  "description": "A visual keyboard map of your key bindings: Minecraft's own, every mod's, Multi Key Bindings' extra bindings and modifiers, and malilib hotkeys, with Ctrl, Alt and F3 layers and key labels that follow your keyboard layout.",
+  "authors": ["Hiveko"],
+  "contact": {
+    "sources": "https://github.com/Hiveko75/keycaps",
+    "issues": "https://github.com/Hiveko75/keycaps/issues"
+  },
+  "license": "ARR",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["io.github.hiveko.keycaps.Keycaps"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_min}",
+    "minecraft": "${minecraft_range}",
+    "java": ">=${java_version}",
+    "fabric-api": "*"
+  }
+}
