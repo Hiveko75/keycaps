@@ -1,8 +1,8 @@
 # Keycaps
 
-A visual keyboard map of your key bindings, for Fabric. **In development; nothing to use yet.**
+A visual keyboard map of your key bindings, for Fabric. **1.0.0 in testing (Minecraft 26.3 first).**
 
-Planned:
+Press **Home** (changeable in Key Binds) in game, on the title screen or on the pause screen. What it does:
 - A keyboard drawn in the game with every bound key coloured by group, short captions on the keys and
   everything bound to a key in its hover text (with the mod's name; conflicts in red).
 - Reads all bindings live: Minecraft's own key bindings (and so every mod that uses the Key Binds menu),
@@ -11,8 +11,11 @@ Planned:
 - Layers for Ctrl +, Alt + and F3 + combinations; holding the real key switches layer.
 - Key labels follow the player's keyboard layout (QWERTY, QWERTZ, AZERTY, …); keyboard shape ANSI, ISO
   or JIS (detected, or set by hand).
-- Opens with its own key, from the pause and title screens, and from other mods through a small entry
-  point.
+- Opens with its own key (Home), also on the pause and title screens, and from other mods through
+  `io.github.hiveko.keycaps.KeycapsApi.open(Screen parent)` (call it through reflection to keep Keycaps
+  optional).
+- Colour groups: `groups.json` in the jar; a copy in `config/keycaps/groups.json` replaces it. Keyboard
+  shape: `config/keycaps.json` (`auto`, `ansi`, `iso`) or the button on the screen.
 
 ## Files
 

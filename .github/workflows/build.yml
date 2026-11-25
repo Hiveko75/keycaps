@@ -4,6 +4,10 @@ name: Build
 # Started by hand only (Actions -> Run workflow): no builds on push or pull requests.
 on:
   workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Minecraft versions to build (JSON list)'
+        default: '["26.3", "26.2", "26.1.2", "1.21.11", "1.21.1"]'
 
 permissions:
   contents: read
@@ -16,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ['26.3', '26.2', '26.1.2', '1.21.11', '1.21.1']
+        target: ${{ fromJSON(inputs.targets || '["26.3", "26.2", "26.1.2", "1.21.11", "1.21.1"]') }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup JDK 21 and 25

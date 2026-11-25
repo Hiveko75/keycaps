@@ -1,6 +1,22 @@
 # Changelog
 
-## 0.1.0 (not released yet)
+## 1.0.0 (not released yet)
 
-- Project set up: Fabric mod `keycaps` for Minecraft 1.21.1, 1.21.11, 26.1.2, 26.2 and 26.3 (one jar per
-  version). Only the entry point so far.
+First version, Minecraft 26.3 (the other versions follow).
+
+- **Keyboard map** (key: Home; also on the title and pause screens): a tenkeyless keyboard with the three
+  mouse buttons, every bound key coloured by group, a short caption on each key and everything on it in
+  the hover text with the mod it comes from. Two actions on the same key in the same layer show in red.
+- **Layers:** tabs for plain keys, Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +). Holding the
+  real Ctrl, Alt, Shift or F3 key shows that layer. On the plain layer a key that only works with a
+  modifier shows it in grey ("Ctrl: Drop").
+- **Reads every binding live:** Minecraft's key mappings (and so every mod in the Key Binds menu), the
+  debug combinations, Multi Key Bindings' extra bindings and modifiers, and malilib hotkeys (MiniHUD,
+  Tweakeroo, Litematica, …; combinations like "hold H, press C" sit on the last key with a note). Keys the
+  drawing doesn't have (numpad, extra mouse buttons) are listed under the keyboard.
+- **Keyboard layout:** the letters on the keys follow the system layout (QWERTZ, AZERTY, …). The shape
+  is ANSI or ISO, guessed from the computer's region or chosen with the button (`config/keycaps.json`).
+- Clicking a key opens Key Binds; coming back refreshes the map.
+- Colour groups and their rules are in `groups.json`; copy it to `config/keycaps/groups.json` to change
+  them. Short captions are in the language files (`keycaps.short.<action>`). English and Hungarian.
+- For other mods: `io.github.hiveko.keycaps.KeycapsApi.open(Screen parent)`.
