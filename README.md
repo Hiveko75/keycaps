@@ -12,6 +12,8 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   combinations on their own tabs ("B +" for Litematica's B, C sequences; "Z +" for Tweakeroo's Z, 1).
 - Layers for Ctrl +, Alt +, Shift + and F3 + combinations and for malilib sequences (B +, Z +, …);
   holding the real key switches layer. Litematica, Tweakeroo, MiniHUD and Axiom have their own colours.
+- Clicking a key opens Key Binds; for Litematica, MiniHUD, Tweakeroo and other malilib hotkeys it opens that
+  mod's own settings (hotkeys tab).
 - Click a colour in the legend to see only those keys (click again for all); **Conflicts** shows only keys
   with more than one action.
 - Key labels follow the player's keyboard layout (QWERTY, QWERTZ, AZERTY, …); keyboard shape ANSI, ISO

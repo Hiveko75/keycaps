@@ -8,6 +8,7 @@ import io.github.hiveko.keycaps.model.Entry;
 import io.github.hiveko.keycaps.model.Groups;
 import io.github.hiveko.keycaps.model.KeyboardShape;
 import io.github.hiveko.keycaps.model.Layer;
+import io.github.hiveko.keycaps.model.ModScreens;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -401,6 +402,15 @@ public class KeycapsScreen extends Screen {
         return ids.size();
     }
 
+    /** The action the key shows (its caption): first in the layer shown, else the grey one from another layer. */
+    private Entry shownEntry(String key, Layer view) {
+        List<Entry> all = on(key, view);
+        List<Entry> here = conflictsOnly && distinctIds(all) < 2 ? List.of() : filtered(all);
+        if (!here.isEmpty()) return here.get(0);
+        if (!conflictsOnly && view == Layer.NORMAL) return firstOtherLayer(key);
+        return null;
+    }
+
     /** The entries the colour filter lets through (all of them without a filter). */
     private List<Entry> filtered(List<Entry> list) {
         if (filterGroup == null || list.isEmpty()) return list;
@@ -555,7 +565,9 @@ public class KeycapsScreen extends Screen {
             }
         }
         if (!any) out.add(Component.translatable("keycaps.tooltip.nothing").withStyle(ChatFormatting.GRAY));
-        out.add(Component.translatable("keycaps.tooltip.click").withStyle(ChatFormatting.DARK_GRAY));
+        String mod = ModScreens.modOf(shownEntry(key, view()));
+        out.add((mod != null ? Component.translatable("keycaps.tooltip.click.mod", ModScreens.modName(mod))
+                : Component.translatable("keycaps.tooltip.click")).withStyle(ChatFormatting.DARK_GRAY));
         return out;
     }
 
@@ -575,7 +587,8 @@ public class KeycapsScreen extends Screen {
             }
         }
         if (hoveredKey != null && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
-            openKeyBinds();
+            // a malilib hotkey (Litematica, MiniHUD, Tweakeroo, …) opens its own mod's settings
+            if (!ModScreens.open(shownEntry(hoveredKey, view()), this)) openKeyBinds();
             return true;
         }
         return false;

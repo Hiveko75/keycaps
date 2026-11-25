@@ -20,6 +20,7 @@
   "keycaps.tooltip.conflicts": "Csak azok a billentyűk, amelyeken több művelet van",
   "keycaps.tooltip.legend": "Kattintás: csak ezek a billentyűk",
   "keycaps.tooltip.legend.off": "Újra kattintva: az összes billentyű",
+  "keycaps.tooltip.click.mod": "Kattintás: %s beállításai",
   "keycaps.tooltip.click": "Kattintás: billentyűk beállítása",
   "keycaps.note.debug_modifier": "Lenyomva tartva: hibakeresési kombinációk (F3 + fül)",
   "keycaps.note.hold": "Ezzel együtt: %s",

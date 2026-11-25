@@ -27,8 +27,16 @@ public final class Collector {
 
     private Collector() {}
 
+    /** Ids of the malilib hotkeys found by the last {@link #collect()}. */
+    private static final Set<String> MALILIB_IDS = new HashSet<>();
+
+    public static boolean isMalilib(Entry e) {
+        return MALILIB_IDS.contains(e.id());
+    }
+
     public static List<Entry> collect() {
         List<Entry> out = new ArrayList<>();
+        MALILIB_IDS.clear();
         Minecraft mc = Minecraft.getInstance();
         Options o = mc.options;
         Mkb mkb = Mkb.get();
@@ -244,6 +252,7 @@ public final class Collector {
             Component source = modName.isEmpty() ? SOURCE_FALLBACK : Component.literal(modName);
             String group = Groups.groupOf(id, modName);
             Component name = Component.literal(pretty);
+            MALILIB_IDS.add(id);
 
             List<String> ordinary = new ArrayList<>();
             for (String h : held) if (Layer.ofModifier(h) == null) ordinary.add(h);
