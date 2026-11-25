@@ -13,6 +13,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.input.KeyEvent;
@@ -57,6 +58,18 @@ public class KeycapsScreen extends Screen {
     private int px, py, pw, ph, unit, kbX, kbY, elsewhereY, legendY;
     private String hoveredKey;
     private boolean hoveredElsewhere;
+    /** Filters: only one colour group (legend click), or only keys with more than one action. */
+    private String filterGroup;
+    private boolean conflictsOnly;
+    private Button conflictsButton;
+    private final List<LegendHit> legendHits = new ArrayList<>();
+    private String hoveredLegend;
+
+    private record LegendHit(int x0, int y0, int x1, int y1, String id) {
+        boolean contains(double mx, double my) {
+            return mx >= x0 && mx < x1 && my >= y0 && my < y1;
+        }
+    }
 
     public KeycapsScreen(Screen parent) {
         super(Component.translatable("keycaps.title"));
@@ -123,16 +136,17 @@ public class KeycapsScreen extends Screen {
         updateTabs();
 
         // keyboard, with the "Elsewhere" line and the legend under it, centred between the tabs and the footer
-        int blockH = kbH + 3 + 11 + 9;
+        int blockH = kbH + 3 + 11 + 19; // keyboard, "Elsewhere", legend (up to two rows)
         kbX = px + (pw - kbW) / 2;
         kbY = py + 38 + Math.max(0, (areaH + 46 - 24 - 4 - blockH) / 2);
         elsewhereY = kbY + kbH + 3;
         legendY = elsewhereY + 11;
 
-        // footer: keyboard shape, Key Binds, caption size, Done
+        // footer: keyboard shape, Key Binds, conflicts, caption size, Done
         int by = py + ph - 24;
-        int fw = pw - 12 - 3 * 4;
-        int shapeW = fw * 31 / 100, keysW = fw * 23 / 100, sizeW = fw * 26 / 100, doneW = fw - shapeW - keysW - sizeW;
+        int fw = pw - 12 - 4 * 4;
+        int shapeW = fw * 27 / 100, keysW = fw * 18 / 100, conflictsW = fw * 19 / 100, sizeW = fw * 20 / 100;
+        int doneW = fw - shapeW - keysW - conflictsW - sizeW;
         int fx = px + 6;
         shapeButton = addRenderableWidget(Button.builder(shapeLabel(), b -> {
             KeycapsConfig.Shape next = switch (KeycapsConfig.shape()) {
@@ -147,6 +161,11 @@ public class KeycapsScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("controls.keybinds"),
                 b -> openKeyBinds()).bounds(fx, by, keysW, 20).build());
         fx += keysW + 4;
+        conflictsButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
+            conflictsOnly = !conflictsOnly;
+            if (conflictsOnly) filterGroup = null;
+        }).bounds(fx, by, conflictsW, 20).tooltip(Tooltip.create(Component.translatable("keycaps.tooltip.conflicts"))).build());
+        fx += conflictsW + 4;
         addRenderableWidget(new CaptionSizeSlider(fx, by, sizeW, 20));
         fx += sizeW + 4;
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> onClose())
@@ -262,7 +281,8 @@ public class KeycapsScreen extends Screen {
             drawCap(g, c, x0, y0, x1, y1, view, hover, cs);
         }
         drawElsewhere(g, view, mouseX, mouseY, cs);
-        drawLegend(g, view, cs);
+        drawLegend(g, view, cs, mouseX, mouseY);
+        updateConflictsButton(view);
 
         super.extractRenderState(g, mouseX, mouseY, partialTick);
 
@@ -270,6 +290,11 @@ public class KeycapsScreen extends Screen {
             g.setComponentTooltipForNextFrame(font, keyTooltip(hoveredKey), mouseX, mouseY);
         } else if (hoveredElsewhere) {
             g.setComponentTooltipForNextFrame(font, elsewhereTooltip(), mouseX, mouseY);
+        } else if (hoveredLegend != null) {
+            g.setComponentTooltipForNextFrame(font, List.of(
+                    Component.translatable("keycaps.group." + hoveredLegend).withStyle(ChatFormatting.WHITE),
+                    Component.translatable(hoveredLegend.equals(filterGroup) ? "keycaps.tooltip.legend.off" : "keycaps.tooltip.legend")
+                            .withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
         }
     }
 
@@ -292,7 +317,9 @@ public class KeycapsScreen extends Screen {
     }
 
     private void drawCap(GuiGraphicsExtractor g, KeyboardShape.Cap c, int x0, int y0, int x1, int y1, Layer view, boolean hover, float cs) {
-        List<Entry> here = on(c.key(), view);
+        List<Entry> all = on(c.key(), view);
+        boolean conflict = distinctIds(all) > 1;
+        List<Entry> here = conflictsOnly && !conflict ? List.of() : filtered(all);
         Layer modifierLayer = Layer.ofModifier(c.key());
         boolean heldModifier = view != Layer.NORMAL && (modifierLayer == view
                 || (view == Layer.F3 && c.key().equals(KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getName()))
@@ -303,8 +330,8 @@ public class KeycapsScreen extends Screen {
         if (!here.isEmpty()) {
             fill = (Groups.color(here.get(0).group()) & 0x00FFFFFF) | 0xD8000000;
             caption = Labels.caption(here.get(0));
-            if (distinctIds(here) > 1) caption = caption + " +" + (distinctIds(here) - 1);
-        } else if (view == Layer.NORMAL && hasOtherLayers(c.key())) {
+            if (distinctIds(all) > 1) caption = caption + " +" + (distinctIds(all) - 1);
+        } else if (!conflictsOnly && view == Layer.NORMAL && hasOtherLayers(c.key())) {
             fill = 0xA0262B31;
             textColor = TEXT_DIM;
             Entry first = firstOtherLayer(c.key());
@@ -316,7 +343,7 @@ public class KeycapsScreen extends Screen {
         if (heldModifier) fill = 0xE05A4A14;
 
         g.fill(x0, y0, x1, y1, fill);
-        int border = hover ? 0xFFFFFFFF : distinctIds(here) > 1 ? 0xFFE0453A : heldModifier ? 0xFFE8C34A : 0x50000000;
+        int border = hover ? 0xFFFFFFFF : conflict && !here.isEmpty() ? 0xFFE0453A : heldModifier ? 0xFFE8C34A : 0x50000000;
         g.outline(x0, y0, x1 - x0, y1 - y0, border);
 
         // key label, top left
@@ -374,18 +401,40 @@ public class KeycapsScreen extends Screen {
         return ids.size();
     }
 
-    private boolean hasOtherLayers(String key) {
-        Map<Layer, List<Entry>> m = byKey.get(key);
-        return m != null && m.keySet().stream().anyMatch(l -> l != Layer.NORMAL);
+    /** The entries the colour filter lets through (all of them without a filter). */
+    private List<Entry> filtered(List<Entry> list) {
+        if (filterGroup == null || list.isEmpty()) return list;
+        List<Entry> out = new ArrayList<>();
+        for (Entry e : list) if (e.group().equals(filterGroup)) out.add(e);
+        return out;
     }
 
+    private boolean hasOtherLayers(String key) {
+        return firstOtherLayer(key) != null;
+    }
+
+    /** The first action on this key in another layer (that the colour filter lets through), or null. */
     private Entry firstOtherLayer(String key) {
         for (Layer l : layers) {
             if (l == Layer.NORMAL) continue;
-            List<Entry> e = on(key, l);
+            List<Entry> e = filtered(on(key, l));
             if (!e.isEmpty()) return e.get(0);
         }
-        return on(key, Layer.SHIFT).get(0);
+        return null;
+    }
+
+    /** "Conflicts: N" for the layer shown; highlighted while only conflicts are shown. */
+    private void updateConflictsButton(Layer view) {
+        if (conflictsButton == null) return;
+        int n = 0;
+        for (Map<Layer, List<Entry>> m : byKey.values()) {
+            List<Entry> l = m.get(view);
+            if (l != null && distinctIds(l) > 1) n++;
+        }
+        MutableComponent label = Component.translatable("keycaps.button.conflicts", n);
+        if (conflictsOnly) label = label.withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE);
+        conflictsButton.setMessage(label);
+        conflictsButton.active = n > 0 || conflictsOnly;
     }
 
     private String shortLayer(Layer l) {
@@ -404,7 +453,9 @@ public class KeycapsScreen extends Screen {
         for (Map.Entry<String, Map<Layer, List<Entry>>> k : byKey.entrySet()) {
             if (capKeys.contains(k.getKey())) continue;
             List<Entry> l = k.getValue().get(view);
-            if (l == null) continue;
+            if (l == null || (conflictsOnly && distinctIds(l) < 2)) continue;
+            l = filtered(l);
+            if (l.isEmpty()) continue;
             items.add(Labels.keyName(k.getKey()).getString() + ": " + Labels.caption(l.get(0)));
         }
         if (items.isEmpty()) return;
@@ -432,25 +483,53 @@ public class KeycapsScreen extends Screen {
         return out;
     }
 
-    private void drawLegend(GuiGraphicsExtractor g, Layer view, float cs) {
+    /**
+     * The colour groups on the keys of this layer, up to two rows. Clicking one shows only its keys; clicking
+     * the chosen one again shows all keys.
+     */
+    private void drawLegend(GuiGraphicsExtractor g, Layer view, float cs, int mouseX, int mouseY) {
+        legendHits.clear();
+        hoveredLegend = null;
         Set<String> present = new LinkedHashSet<>();
         for (Groups.Group gr : Groups.all()) {
-            for (String k : capKeys) {
-                for (Entry e : on(k, view)) if (e.group().equals(gr.id())) present.add(gr.id());
+            if (gr.id().equals(filterGroup)) {
+                present.add(gr.id());
+                continue;
+            }
+            search:
+            for (Map<Layer, List<Entry>> m : byKey.values()) {
+                for (Entry e : m.getOrDefault(view, List.of())) {
+                    if (e.group().equals(gr.id())) {
+                        present.add(gr.id());
+                        break search;
+                    }
+                }
             }
         }
-        int x = px + 6;
+        int x = px + 6, y = legendY;
         int maxX = px + pw - 6;
         for (String id : present) {
             Component name = Component.translatable("keycaps.group." + id);
             int w = 8 + (int) Math.ceil(font.width(name) * cs) + 8;
-            if (x + w > maxX) break;
-            g.fill(x, legendY + 1, x + 6, legendY + 7, Groups.color(id));
+            if (x + w > maxX) {
+                if (y > legendY) break; // two rows at most
+                x = px + 6;
+                y += 10;
+            }
+            boolean chosen = id.equals(filterGroup);
+            boolean faded = filterGroup != null && !chosen;
+            int color = Groups.color(id);
+            g.fill(x, y + 1, x + 6, y + 7, faded ? (color & 0x00FFFFFF) | 0x60000000 : color);
+            if (chosen) g.outline(x - 1, y, 8, 8, 0xFFFFFFFF);
             g.pose().pushMatrix();
-            g.pose().translate(x + 8, legendY + 1);
+            g.pose().translate(x + 8, y + 1);
             g.pose().scale(cs, cs);
-            g.text(font, name, 0, 0, TEXT_DIM, false);
+            g.text(font, chosen ? name.copy().withStyle(ChatFormatting.UNDERLINE) : name, 0, 0,
+                    chosen ? TEXT : faded ? TEXT_FAINT : TEXT_DIM, false);
             g.pose().popMatrix();
+            LegendHit hit = new LegendHit(x - 1, y - 1, x + w - 6, y + 9, id);
+            legendHits.add(hit);
+            if (hit.contains(mouseX, mouseY)) hoveredLegend = id;
             x += w;
         }
     }
@@ -485,6 +564,16 @@ public class KeycapsScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (super.mouseClicked(event, doubleClick)) return true;
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
+            for (LegendHit hit : legendHits) {
+                if (!hit.contains(event.x(), event.y())) continue;
+                filterGroup = hit.id().equals(filterGroup) ? null : hit.id();
+                if (filterGroup != null) conflictsOnly = false;
+                minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                return true;
+            }
+        }
         if (hoveredKey != null && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             openKeyBinds();
             return true;

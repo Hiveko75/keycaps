@@ -16,7 +16,10 @@ First version, Minecraft 26.3 (the other versions follow).
   debug combinations, Multi Key Bindings' extra bindings and modifiers, and malilib hotkeys (MiniHUD,
   Tweakeroo, Litematica, …). The plain keyboard shows single keys only; combinations have their own tabs:
   Ctrl / Alt / Shift +, F3 +, and one tab per first key of a sequence ("B +" for Litematica's B, C; "Z +"
-  for Tweakeroo's Z, 1). Holding that key shows its tab. Litematica and Tweakeroo have their own colours.
+  for Tweakeroo's Z, 1). Holding that key shows its tab. Litematica, Tweakeroo, MiniHUD and Axiom have their
+  own colours.
+- **Filters:** clicking a colour in the legend shows only that group's keys (click it again for all keys);
+  the **Conflicts: N** button shows only the keys with more than one action in the layer shown.
   Keys the drawing doesn't have (extra mouse buttons, F13 and up) are listed under the keyboard.
 - **Action names in small text** (50% of normal by default) with a slider in the footer; the steps are whole
   screen pixels, so the text stays sharp, and as many lines as fit (up to three) are used.

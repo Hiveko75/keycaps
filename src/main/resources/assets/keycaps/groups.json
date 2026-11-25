@@ -11,12 +11,16 @@
     {"id": "tools", "color": "#6B7C8E"},
     {"id": "litematica", "color": "#7FB539"},
     {"id": "tweakeroo", "color": "#8E5B3A"},
+    {"id": "minihud", "color": "#4F5BD5"},
+    {"id": "axiom", "color": "#E0457B"},
     {"id": "creative", "color": "#C2559E"},
     {"id": "other", "color": "#55606C"}
   ],
   "rules": [
     {"group": "litematica", "match": "^litematica:"},
     {"group": "tweakeroo", "match": "^tweakeroo:"},
+    {"group": "minihud", "match": "^minihud:"},
+    {"group": "axiom", "match": "axiom"},
     {"group": "movement", "match": "^(multi\\.)?(key\\.(forward|left|back|right|jump|sneak|sprint|crawl)|toggle\\.key\\.(sprint|sneak)|multi\\.toggle\\.key\\.(sprint|sneak)|multi\\.toggle\\.options\\.autojump)\\b"},
     {"group": "movement", "match": "elytra|ghastcontrols|fly-speed|flyspeed|scrollwalk|invmove|jjelytraswap"},
     {"group": "action", "match": "^(multi\\.)?key\\.(attack|use|pickitem)\\b|reacharound|reachbehind|accurateblockplacement|clienttweaks\\.(mine_single_block|disable_log_stripping|disable_step_assist)"},
