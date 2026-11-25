@@ -4,9 +4,11 @@
 
 First version, Minecraft 26.3 (the other versions follow).
 
-- **Keyboard map** (key: Home; also on the title and pause screens): a tenkeyless keyboard with the three
-  mouse buttons, every bound key coloured by group, a short caption on each key and everything on it in
-  the hover text with the mod it comes from. Two actions on the same key in the same layer show in red.
+- **Keyboard map** (key: Home, which also closes it; also on the title and pause screens): a full keyboard
+  with the numeric keypad and the three mouse buttons, in a window that fills the screen with a margin
+  (like Better Advancements; the keypad is left out when the window is too small for it). Every bound
+  key is coloured by group, with a short caption on it and everything on it in the hover text with the
+  mod it comes from. Two actions on the same key in the same layer show in red.
 - **Layers:** tabs for plain keys, Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +). Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer. On the plain layer a key that only works with a
   modifier shows it in grey ("Ctrl: Drop").

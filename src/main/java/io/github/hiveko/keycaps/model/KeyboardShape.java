@@ -4,15 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A tenkeyless keyboard (ANSI or ISO) in key units, with the three mouse buttons in the empty spot under
- * Delete / End / Page Down. Keys are named by Minecraft's key names ({@code key.keyboard.q}), which stand
- * for physical positions; the letter printed on each key comes from the player's keyboard layout.
+ * A full-size keyboard (ANSI or ISO) in key units, the numeric keypad optional, with the three mouse
+ * buttons in the empty spot under Delete / End / Page Down. Keys are named by Minecraft's key names
+ * ({@code key.keyboard.q}), which stand for physical positions; the letter printed on each key comes from
+ * the player's keyboard layout.
  */
 public final class KeyboardShape {
     /** One rectangle of a key; ISO Enter is two rectangles with the same name. */
     public record Cap(String key, float x, float y, float w, float h) {}
 
+    /** Width without the numeric keypad (tenkeyless) and with it. */
     public static final float WIDTH = 18.25f;
+    public static final float WIDTH_NUMPAD = 22.5f;
     public static final float HEIGHT = 6.5f;
 
     /** The extra ISO key next to left Shift (SDL "non-US backslash"); Minecraft 26.3 names it world.1. */
@@ -20,7 +23,11 @@ public final class KeyboardShape {
 
     private KeyboardShape() {}
 
-    public static List<Cap> caps(boolean iso) {
+    public static float width(boolean numpad) {
+        return numpad ? WIDTH_NUMPAD : WIDTH;
+    }
+
+    public static List<Cap> caps(boolean iso, boolean numpad) {
         List<Cap> c = new ArrayList<>();
         // function row
         add(c, "escape", 0, 0, 1);
@@ -91,7 +98,25 @@ public final class KeyboardShape {
         add(c, "left", 15.25f, y, 1);
         add(c, "down", 16.25f, y, 1);
         add(c, "right", 17.25f, y, 1);
+        if (numpad) numpad(c);
         return c;
+    }
+
+    /** The numeric keypad, right of the arrow keys. */
+    private static void numpad(List<Cap> c) {
+        float x = 18.5f;
+        add(c, "num.lock", x, 1.5f, 1);
+        add(c, "keypad.divide", x + 1, 1.5f, 1);
+        add(c, "keypad.multiply", x + 2, 1.5f, 1);
+        add(c, "keypad.subtract", x + 3, 1.5f, 1);
+        String[][] rows = {{"7", "8", "9"}, {"4", "5", "6"}, {"1", "2", "3"}};
+        for (int r = 0; r < rows.length; r++) {
+            for (int i = 0; i < 3; i++) add(c, "keypad." + rows[r][i], x + i, 2.5f + r, 1);
+        }
+        c.add(new Cap("key.keyboard.keypad.add", x + 3, 2.5f, 1, 2));
+        c.add(new Cap("key.keyboard.keypad.enter", x + 3, 4.5f, 1, 2));
+        add(c, "keypad.0", x, 5.5f, 2);
+        add(c, "keypad.period", x + 2, 5.5f, 1);
     }
 
     private static void add(List<Cap> c, String name, float x, float y, float w) {

@@ -3,8 +3,9 @@
 A visual keyboard map of your key bindings, for Fabric. **1.0.0 in testing (Minecraft 26.3 first).**
 
 Press **Home** (changeable in Key Binds) in game, on the title screen or on the pause screen. What it does:
-- A keyboard drawn in the game with every bound key coloured by group, short captions on the keys and
-  everything bound to a key in its hover text (with the mod's name; conflicts in red).
+- A full keyboard with the numeric keypad (left out when the window is too small), drawn in a window that
+  fills the screen with a margin, with every bound key coloured by group, short captions on the keys and
+  everything bound to a key in its hover text (with the mod's name; conflicts in red). Home closes it again.
 - Reads all bindings live: Minecraft's own key bindings (and so every mod that uses the Key Binds menu),
   Minecraft's debug combinations (F3 + …), **Multi Key Bindings**' extra bindings and modifiers, and
   **malilib** hotkeys on a single key (MiniHUD, Tweakeroo, Litematica, …).

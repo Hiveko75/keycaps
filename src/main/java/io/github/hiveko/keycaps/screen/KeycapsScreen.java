@@ -38,7 +38,10 @@ import java.util.Set;
  * hovering a key lists everything on it; clicking opens Minecraft's Key Binds screen.
  */
 public class KeycapsScreen extends Screen {
-    private static final int PANEL_W = 430, PANEL_H = 262;
+    /** Space left around the window, like Better Advancements; the window fills the rest of the screen. */
+    private static final int MARGIN = 30;
+    /** Key size limits (GUI pixels per key): below MIN the numeric keypad is left out, above MAX the window shrinks. */
+    private static final int MIN_UNIT_NUMPAD = 18, MAX_UNIT = 36;
     private static final int TEXT = 0xFFFFFFFF, TEXT_DIM = 0xFF9AA3AD, TEXT_FAINT = 0xFF6B737C;
 
     private final Screen parent;
@@ -72,10 +75,6 @@ public class KeycapsScreen extends Screen {
             byKey.computeIfAbsent(e.key(), k -> new EnumMap<>(Layer.class))
                     .computeIfAbsent(e.layer(), l -> new ArrayList<>()).add(e);
         }
-        caps = KeyboardShape.caps(KeycapsConfig.effectiveShape() == KeycapsConfig.Shape.ISO);
-        capKeys.clear();
-        for (KeyboardShape.Cap c : caps) capKeys.add(c.key());
-
         Set<Layer> used = new LinkedHashSet<>();
         for (Entry e : entries) used.add(e.layer());
         layers = new ArrayList<>(List.of(Layer.NORMAL, Layer.CTRL, Layer.ALT));
@@ -83,10 +82,27 @@ public class KeycapsScreen extends Screen {
         layers.add(Layer.F3);
         if (!layers.contains(selected)) selected = Layer.NORMAL;
 
-        pw = Math.min(PANEL_W, width - 8);
-        ph = Math.min(PANEL_H, height - 8);
+        // window: the screen minus a margin (smaller screens: almost all of it)
+        pw = width - 2 * MARGIN >= 320 ? width - 2 * MARGIN : width - 8;
+        ph = height - 2 * MARGIN >= 220 ? height - 2 * MARGIN : height - 8;
+
+        // keyboard size: with the numeric keypad when its keys stay big enough
+        int areaW = pw - 12, areaH = ph - 38 - 46;
+        boolean numpad = unitFor(areaW, areaH, true) >= MIN_UNIT_NUMPAD;
+        unit = Math.min(MAX_UNIT, unitFor(areaW, areaH, numpad));
+        float kbWidth = KeyboardShape.width(numpad);
+        int kbW = Math.round(kbWidth * unit), kbH = Math.round(KeyboardShape.HEIGHT * unit);
+        if (unit == MAX_UNIT) {
+            // very large screens: the window hugs the keyboard instead of growing further
+            pw = Math.min(pw, kbW + 12);
+            ph = Math.min(ph, kbH + 38 + 46 + 12);
+            areaH = ph - 38 - 46;
+        }
         px = (width - pw) / 2;
         py = (height - ph) / 2;
+        caps = KeyboardShape.caps(KeycapsConfig.effectiveShape() == KeycapsConfig.Shape.ISO, numpad);
+        capKeys.clear();
+        for (KeyboardShape.Cap c : caps) capKeys.add(c.key());
 
         // tabs
         tabs.clear();
@@ -102,14 +118,11 @@ public class KeycapsScreen extends Screen {
         }
         updateTabs();
 
-        // keyboard
-        int top = py + 38;
-        int bottom = py + ph - 46;
-        unit = (int) Math.max(8, Math.floor(Math.min((pw - 12) / KeyboardShape.WIDTH, (bottom - top) / KeyboardShape.HEIGHT)));
-        int kbW = Math.round(KeyboardShape.WIDTH * unit);
+        // keyboard, with the "Elsewhere" line and the legend under it, centred between the tabs and the footer
+        int blockH = kbH + 3 + 11 + 9;
         kbX = px + (pw - kbW) / 2;
-        kbY = top;
-        elsewhereY = kbY + Math.round(KeyboardShape.HEIGHT * unit) + 3;
+        kbY = py + 38 + Math.max(0, (areaH + 46 - 24 - 4 - blockH) / 2);
+        elsewhereY = kbY + kbH + 3;
         legendY = elsewhereY + 11;
 
         // footer: keyboard shape, Key Binds, caption size, Done
@@ -166,6 +179,10 @@ public class KeycapsScreen extends Screen {
         protected void applyValue() {
             KeycapsConfig.setCaptionSize(Math.round(100f * stepOfValue() / steps));
         }
+    }
+
+    private static int unitFor(int areaW, int areaH, boolean numpad) {
+        return (int) Math.max(8, Math.floor(Math.min(areaW / KeyboardShape.width(numpad), areaH / KeyboardShape.HEIGHT)));
     }
 
     private void updateTabs() {
