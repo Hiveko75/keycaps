@@ -494,38 +494,53 @@ public class KeycapsScreen extends Screen {
     }
 
     /**
-     * The colour groups on the keys of this layer, up to two rows. Clicking one shows only its keys; clicking
-     * the chosen one again shows all keys.
+     * The colour groups on the keys of this layer, in two centred rows: the general groups, then the mods
+     * with their own colour (Litematica, Tweakeroo, MiniHUD, Axiom; "row": 2 in groups.json). Clicking one
+     * shows only its keys; clicking the chosen one again shows all keys.
      */
     private void drawLegend(GuiGraphicsExtractor g, Layer view, float cs, int mouseX, int mouseY) {
         legendHits.clear();
         hoveredLegend = null;
-        Set<String> present = new LinkedHashSet<>();
+        List<Groups.Group> row1 = new ArrayList<>(), row2 = new ArrayList<>();
         for (Groups.Group gr : Groups.all()) {
-            if (gr.id().equals(filterGroup)) {
-                present.add(gr.id());
-                continue;
-            }
+            boolean present = gr.id().equals(filterGroup);
             search:
             for (Map<Layer, List<Entry>> m : byKey.values()) {
+                if (present) break;
                 for (Entry e : m.getOrDefault(view, List.of())) {
                     if (e.group().equals(gr.id())) {
-                        present.add(gr.id());
+                        present = true;
                         break search;
                     }
                 }
             }
+            if (present) (gr.row() >= 2 ? row2 : row1).add(gr);
         }
-        int x = px + 6, y = legendY;
-        int maxX = px + pw - 6;
-        for (String id : present) {
+        if (row1.isEmpty()) {
+            row1 = row2;
+            row2 = List.of();
+        }
+        drawLegendRow(g, row1, legendY, cs, mouseX, mouseY);
+        drawLegendRow(g, row2, legendY + 10, cs, mouseX, mouseY);
+    }
+
+    private void drawLegendRow(GuiGraphicsExtractor g, List<Groups.Group> row, int y, float cs, int mouseX, int mouseY) {
+        if (row.isEmpty()) return;
+        int maxW = pw - 12;
+        int[] widths = new int[row.size()];
+        int total = 0;
+        for (int i = 0; i < row.size(); i++) {
+            widths[i] = 8 + (int) Math.ceil(font.width(Component.translatable("keycaps.group." + row.get(i).id())) * cs);
+            total += widths[i];
+        }
+        // gap between items: 8 when it fits, less on a narrow window
+        int gap = row.size() > 1 ? Math.max(2, Math.min(8, (maxW - total) / (row.size() - 1))) : 0;
+        int rowW = total + gap * (row.size() - 1);
+        int x = px + 6 + Math.max(0, (maxW - rowW) / 2);
+        for (int i = 0; i < row.size(); i++) {
+            if (x + widths[i] > px + pw - 6) break; // a very narrow window: the rest does not fit
+            String id = row.get(i).id();
             Component name = Component.translatable("keycaps.group." + id);
-            int w = 8 + (int) Math.ceil(font.width(name) * cs) + 8;
-            if (x + w > maxX) {
-                if (y > legendY) break; // two rows at most
-                x = px + 6;
-                y += 10;
-            }
             boolean chosen = id.equals(filterGroup);
             boolean faded = filterGroup != null && !chosen;
             int color = Groups.color(id);
@@ -537,10 +552,10 @@ public class KeycapsScreen extends Screen {
             g.text(font, chosen ? name.copy().withStyle(ChatFormatting.UNDERLINE) : name, 0, 0,
                     chosen ? TEXT : faded ? TEXT_FAINT : TEXT_DIM, false);
             g.pose().popMatrix();
-            LegendHit hit = new LegendHit(x - 1, y - 1, x + w - 6, y + 9, id);
+            LegendHit hit = new LegendHit(x - 1, y - 1, x + widths[i] + 1, y + 9, id);
             legendHits.add(hit);
             if (hit.contains(mouseX, mouseY)) hoveredLegend = id;
-            x += w;
+            x += widths[i] + gap;
         }
     }
 

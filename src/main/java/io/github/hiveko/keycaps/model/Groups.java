@@ -27,7 +27,8 @@ import java.util.regex.Pattern;
  * rule matches go to "other".
  */
 public final class Groups {
-    public record Group(String id, int color) {}
+    /** A colour group; {@code row} is its legend row (1, or 2 for mods with their own colour). */
+    public record Group(String id, int color, int row) {}
 
     private record Rule(String group, Pattern pattern) {}
 
@@ -66,7 +67,8 @@ public final class Groups {
             if (groups != null) for (JsonElement g : groups) {
                 JsonObject o = g.getAsJsonObject();
                 String id = o.get("id").getAsString();
-                GROUPS.put(id, new Group(id, parseColor(o.get("color").getAsString())));
+                int row = o.has("row") ? o.get("row").getAsInt() : 1;
+                GROUPS.put(id, new Group(id, parseColor(o.get("color").getAsString()), row));
             }
             JsonArray rules = root.getAsJsonArray("rules");
             if (rules != null) for (JsonElement r : rules) {
@@ -78,7 +80,7 @@ public final class Groups {
                 }
             }
         }
-        GROUPS.putIfAbsent(OTHER, new Group(OTHER, 0xFF5D6B7A));
+        GROUPS.putIfAbsent(OTHER, new Group(OTHER, 0xFF5D6B7A, 1));
     }
 
     public static String groupOf(String id, String context) {

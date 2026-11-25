@@ -1,5 +1,5 @@
 {
-  "_comment": "Colour groups for Keycaps. Copy this file to config/keycaps/groups.json to change it. A rule's 'match' is a regular expression, searched in '<action id> <category or mod name>' in lower case; the first rule that matches decides. Group names are translated with keycaps.group.<id>.",
+  "_comment": "Colour groups for Keycaps. Copy this file to config/keycaps/groups.json to change it. A rule's 'match' is a regular expression, searched in '<action id> <category or mod name>' in lower case; the first rule that matches decides. Group names are translated with keycaps.group.<id>. 'row': 2 puts a group on the legend's second row (mods with their own colour).",
   "groups": [
     {"id": "movement", "color": "#3B7DD8"},
     {"id": "action", "color": "#C8503C"},
@@ -9,12 +9,12 @@
     {"id": "social", "color": "#2C9DAD"},
     {"id": "graphics", "color": "#A8962C"},
     {"id": "tools", "color": "#6B7C8E"},
-    {"id": "litematica", "color": "#7FB539"},
-    {"id": "tweakeroo", "color": "#8E5B3A"},
-    {"id": "minihud", "color": "#4F5BD5"},
-    {"id": "axiom", "color": "#E0457B"},
     {"id": "creative", "color": "#C2559E"},
-    {"id": "other", "color": "#55606C"}
+    {"id": "other", "color": "#55606C"},
+    {"id": "litematica", "color": "#7FB539", "row": 2},
+    {"id": "tweakeroo", "color": "#8E5B3A", "row": 2},
+    {"id": "minihud", "color": "#4F5BD5", "row": 2},
+    {"id": "axiom", "color": "#E0457B", "row": 2}
   ],
   "rules": [
     {"group": "litematica", "match": "^litematica:"},
