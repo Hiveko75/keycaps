@@ -18,7 +18,7 @@ First version, Minecraft 26.3 (the other versions follow).
   screen pixels, so the text stays sharp, and as many lines as fit (up to three) are used.
 - **Keyboard layout:** the letters on the keys follow the system layout (QWERTZ, AZERTY, …). The shape
   is ANSI or ISO, guessed from the computer's region or chosen with the button (`config/keycaps.json`).
-- Clicking a key opens Key Binds; coming back refreshes the map.
+- Clicking a key opens Key Binds; coming back refreshes the map. Pressing the open key again closes the map.
 - Colour groups and their rules are in `groups.json`; copy it to `config/keycaps/groups.json` to change
   them. Short captions are in the language files (`keycaps.short.<action>`). English and Hungarian.
 - For other mods: `io.github.hiveko.keycaps.KeycapsApi.open(Screen parent)`.

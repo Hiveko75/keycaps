@@ -1,6 +1,7 @@
 package io.github.hiveko.keycaps.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import io.github.hiveko.keycaps.Keycaps;
 import io.github.hiveko.keycaps.KeycapsConfig;
 import io.github.hiveko.keycaps.model.Collector;
 import io.github.hiveko.keycaps.model.Entry;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -459,6 +461,16 @@ public class KeycapsScreen extends Screen {
             return true;
         }
         return false;
+    }
+
+    /** The open key (Home by default) closes the map again. */
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (Keycaps.openKey != null && !Keycaps.openKey.isUnbound() && Keycaps.openKey.matches(event)) {
+            onClose();
+            return true;
+        }
+        return super.keyPressed(event);
     }
 
     private void openKeyBinds() {
