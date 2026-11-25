@@ -12,6 +12,7 @@
   "keycaps.button.smart": "Okos: %s",
   "keycaps.button.caption": "Felirat: %s%%",
   "keycaps.button.shape": "Billentyűzet: %s",
+  "keycaps.button.keybinds": "Billentyűk...",
   "keycaps.shape.auto": "Auto (%s)",
   "keycaps.shape.ansi": "ANSI",
   "keycaps.shape.iso": "ISO",

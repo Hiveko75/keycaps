@@ -12,6 +12,7 @@
   "keycaps.button.smart": "Smart: %s",
   "keycaps.button.caption": "Text on keys: %s%%",
   "keycaps.button.shape": "Keyboard: %s",
+  "keycaps.button.keybinds": "Key Binds...",
   "keycaps.shape.auto": "Auto (%s)",
   "keycaps.shape.ansi": "ANSI",
   "keycaps.shape.iso": "ISO",

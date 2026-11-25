@@ -167,8 +167,10 @@ public class KeycapsScreen extends Screen {
             rebuildWidgets();
         }).bounds(fx, by, shapeW, 20).build());
         fx += shapeW + 4;
-        addRenderableWidget(Button.builder(Component.translatable("controls.keybinds"),
-                b -> openKeyBinds()).bounds(fx, by, keysW, 20).build());
+        // own short label (vanilla's "Key Binds..." is very long in some languages), its full title as tooltip
+        addRenderableWidget(Button.builder(Component.translatable("keycaps.button.keybinds"),
+                b -> openKeyBinds()).bounds(fx, by, keysW, 20)
+                .tooltip(Tooltip.create(Component.translatable("controls.keybinds.title"))).build());
         fx += keysW + 4;
         conflictsButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
             conflictsOnly = !conflictsOnly;
