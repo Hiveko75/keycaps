@@ -2,7 +2,7 @@
   "key.keycaps.open": "Billentyűzet-térkép",
   "key.category.keycaps.main": "Keycaps",
   "keycaps.title": "Billentyűzet-térkép",
-  "keycaps.layer.normal": "Billentyűk",
+  "keycaps.layer.normal": "Alap",
   "keycaps.layer.ctrl": "Ctrl +",
   "keycaps.layer.alt": "Alt +",
   "keycaps.layer.shift": "Shift +",
