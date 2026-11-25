@@ -36,7 +36,8 @@ import java.util.Set;
 
 /**
  * The keyboard map: a tenkeyless keyboard (plus the three mouse buttons) coloured by what each key does,
- * with tabs for the Ctrl, Alt, Shift and F3 layers. Holding the real modifier key shows its layer;
+ * with tabs for the Ctrl, Alt, Shift and F3 layers (no tab selected: keys without a modifier; clicking the
+ * selected tab again goes back there, like the colour filter). Holding the real modifier key shows its layer;
  * hovering a key lists everything on it; clicking opens Minecraft's Key Binds screen (or the malilib mod's
  * settings). A key is a conflict when two of its actions can fire at the same time: with the smart check on,
  * only actions that share a situation ({@link Situations}) count; right-click marks pairs as fine.
@@ -129,13 +130,14 @@ public class KeycapsScreen extends Screen {
         capKeys.clear();
         for (KeyboardShape.Cap c : caps) capKeys.add(c.key());
 
-        // tabs
+        // tabs: one per modifier layer; the plain keys are shown when none is selected
         tabs.clear();
-        int tabW = Math.min(60, (pw - 12) / layers.size());
+        int tabW = Math.min(60, (pw - 12) / Math.max(1, layers.size() - 1));
         int tx = px + 6;
         for (Layer l : layers) {
+            if (l == Layer.NORMAL) continue;
             Button b = Button.builder(layerLabel(l), btn -> {
-                selected = l;
+                selected = selected == l ? Layer.NORMAL : l;
                 updateTabs();
             }).bounds(tx, py + 18, tabW - 2, 16).build();
             tabs.put(l, addRenderableWidget(b));
@@ -227,8 +229,10 @@ public class KeycapsScreen extends Screen {
     private void updateTabs() {
         for (Map.Entry<Layer, Button> t : tabs.entrySet()) {
             MutableComponent label = layerLabel(t.getKey()).copy();
-            if (t.getKey() == selected) label = label.withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE);
+            boolean on = t.getKey() == selected;
+            if (on) label = label.withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE);
             t.getValue().setMessage(label);
+            t.getValue().setTooltip(on ? Tooltip.create(Component.translatable("keycaps.tooltip.layer.off")) : null);
         }
     }
 

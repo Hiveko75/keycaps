@@ -9,7 +9,8 @@ First version, Minecraft 26.3 (the other versions follow).
   (like Better Advancements; the keypad is left out when the window is too small for it). Every bound
   key is coloured by group, with a short caption on it and everything on it in the hover text with the
   mod it comes from. Actions that clash on the same key show in red.
-- **Layers:** tabs for plain keys, Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +). Holding the
+- **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
+  map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer. On the plain layer a key that only works with a
   modifier shows it in grey ("Ctrl: Drop").
 - **Reads every binding live:** Minecraft's key mappings (and so every mod in the Key Binds menu), the
