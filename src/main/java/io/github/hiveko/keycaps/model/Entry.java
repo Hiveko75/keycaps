@@ -2,6 +2,8 @@ package io.github.hiveko.keycaps.model;
 
 import net.minecraft.network.chat.Component;
 
+import java.util.Set;
+
 /**
  * One action on one key in one layer.
  *
@@ -12,5 +14,7 @@ import net.minecraft.network.chat.Component;
  * @param source where it comes from (the key mapping's category or the mod's name)
  * @param group  the colour group ({@link Groups})
  * @param note   extra text for the hover box (for example "Hold H, press C"), or null
+ * @param when   when it can fire, for the smart conflict check ({@link Situations})
  */
-public record Entry(Layer layer, String key, String id, Component name, Component source, String group, Component note) {}
+public record Entry(Layer layer, String key, String id, Component name, Component source, String group, Component note,
+                    Set<String> when) {}

@@ -53,40 +53,55 @@ public final class Collector {
             Component source = km.getCategory().label();
             String context = km.getCategory().id().toString() + " " + source.getString();
             String group = Groups.groupOf(id, context);
+            Situations.Rule rule = Situations.ruleOf(id, context);
+            Set<String> when = Situations.of(rule, Situations.IN_WORLD);
             if (debug.contains(km)) {
                 if (km == o.keyDebugModifier) {
                     if (!key.equals(overlay)) {
                         out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group,
-                                Component.translatable("keycaps.note.debug_modifier")));
+                                Component.translatable("keycaps.note.debug_modifier"), when));
                     }
                 } else if (km == o.keyDebugOverlay) {
                     Component note = key.equals(debugModifier) ? Component.translatable("keycaps.note.debug_modifier") : null;
-                    out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group, note));
+                    out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group, note, when));
                 } else {
-                    out.add(new Entry(Layer.F3, key.getName(), id, name, source, group, null));
+                    out.add(new Entry(Layer.F3, key.getName(), id, name, source, group, null, when));
                 }
                 continue;
             }
-            addWithModifiers(out, key.getName(), mkb.modifiers(id), id, name, source, group);
+            addWithModifiers(out, key.getName(), withAdded(mkb.modifiers(id), rule), id, name, source, group, when);
         }
 
         // Multi Key Bindings: extra bindings for an action, and its own toggle actions
         for (Mkb.Extra b : mkb.extras()) {
             String base = b.action().startsWith("multi.") ? b.action().substring("multi.".length()) : b.action();
             String group = Groups.groupOf(b.action(), base + " " + b.category());
+            Situations.Rule rule = Situations.ruleOf(base, b.category());
             Component source = Component.translatable("keycaps.source.mkb");
             List<String> mods = mkb.modifiers(b.id());
             if (mods.isEmpty()) mods = mkb.modifiers(b.action());
-            addWithModifiers(out, b.key(), mods, b.action(), b.name(), source, group);
+            addWithModifiers(out, b.key(), withAdded(mods, rule), b.action(), b.name(), source, group,
+                    Situations.of(rule, Situations.IN_WORLD));
         }
 
         Malilib.collect(out);
         return out;
     }
 
+    /** The modifiers plus the one a situation rule says the mod adds itself (the emoji picker's Ctrl). */
+    static List<String> withAdded(List<String> modifiers, Situations.Rule rule) {
+        String added = Situations.addedModifier(rule);
+        if (added == null) return modifiers;
+        Layer layer = Layer.ofModifier(added);
+        for (String m : modifiers) if (Layer.ofModifier(m) == layer) return modifiers;
+        List<String> out = new ArrayList<>(modifiers);
+        out.add(0, added);
+        return out;
+    }
+
     /** Puts an action into the layer its modifiers stand for; other held keys become a note. */
     static void addWithModifiers(List<Entry> out, String key, List<String> modifiers, String id,
-                                 Component name, Component source, String group) {
+                                 Component name, Component source, String group, Set<String> when) {
         Layer layer = Layer.NORMAL;
         List<String> other = new ArrayList<>();
         for (String m : modifiers) {
@@ -103,7 +118,7 @@ public final class Collector {
             }
             note = Component.translatable("keycaps.note.hold", held);
         }
-        out.add(new Entry(layer, key, id, name, source, group, note));
+        out.add(new Entry(layer, key, id, name, source, group, note, when));
     }
 
     static void warnOnce(String what, Throwable t) {
@@ -236,6 +251,8 @@ public final class Collector {
             if (keys == null || keys.isEmpty()) return;
             Object context = getContext.invoke(getSettings.invoke(keybind));
             if (context instanceof Enum<?> e && "GUI".equals(e.name())) return; // only inside its own screens
+            // malilib says where a hotkey works: INGAME (no screen open) or ANY (also in screens)
+            boolean anywhere = context instanceof Enum<?> e && "ANY".equals(e.name());
 
             List<String> names = new ArrayList<>();
             for (Object k : keys) {
@@ -253,15 +270,17 @@ public final class Collector {
             String group = Groups.groupOf(id, modName);
             Component name = Component.literal(pretty);
             MALILIB_IDS.add(id);
+            Set<String> when = Situations.of(Situations.ruleOf(id, modName),
+                    anywhere ? Situations.WORLD_AND_MENU : Situations.IN_WORLD);
 
             List<String> ordinary = new ArrayList<>();
             for (String h : held) if (Layer.ofModifier(h) == null) ordinary.add(h);
             if (ordinary.isEmpty()) {
-                addWithModifiers(out, main, held, id, name, source, group);
+                addWithModifiers(out, main, held, id, name, source, group, when);
             } else if (held.size() == 1) {
                 String debugKey = KeyMappingHelper.getBoundKeyOf(Minecraft.getInstance().options.keyDebugModifier).getName();
                 Layer layer = held.get(0).equals(debugKey) ? Layer.F3 : Layer.hold(held.get(0));
-                out.add(new Entry(layer, main, id, name, source, group, null));
+                out.add(new Entry(layer, main, id, name, source, group, null, when));
             }
         }
 

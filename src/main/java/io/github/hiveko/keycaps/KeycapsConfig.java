@@ -12,10 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
- * {@code config/keycaps.json}: the keyboard shape (auto, ansi or iso) and the size of the action names on
- * the keys, in percent of normal text (50 by default).
+ * {@code config/keycaps.json}: the keyboard shape (auto, ansi or iso), the size of the action names on the
+ * keys in percent of normal text (50 by default), the smart conflict check (on by default) and the pairs of
+ * actions marked "not a conflict" (right-click on a key), each as {@code layer|key|action|action}.
  */
 public final class KeycapsConfig {
     public enum Shape { AUTO, ANSI, ISO }
@@ -29,6 +31,8 @@ public final class KeycapsConfig {
 
     private static Shape shape = Shape.AUTO;
     private static int captionSize = DEFAULT_CAPTION_SIZE;
+    private static boolean smartConflicts = true;
+    private static final Set<String> NOT_CONFLICTS = new TreeSet<>();
 
     private KeycapsConfig() {}
 
@@ -62,6 +66,29 @@ public final class KeycapsConfig {
         save();
     }
 
+    /** Smart conflict check: shared keys only count when both actions can fire at the same time. */
+    public static boolean smartConflicts() {
+        return smartConflicts;
+    }
+
+    public static void setSmartConflicts(boolean on) {
+        smartConflicts = on;
+        save();
+    }
+
+    /** The stored form of a pair: {@code layer|key|a|b}, the two action ids sorted. */
+    public static String pair(String layer, String key, String a, String b) {
+        return a.compareTo(b) <= 0 ? layer + "|" + key + "|" + a + "|" + b : layer + "|" + key + "|" + b + "|" + a;
+    }
+
+    public static boolean notConflict(String pair) {
+        return NOT_CONFLICTS.contains(pair);
+    }
+
+    public static void setNotConflict(String pair, boolean mark) {
+        if (mark ? NOT_CONFLICTS.add(pair) : NOT_CONFLICTS.remove(pair)) save();
+    }
+
     public static void load() {
         Path f = file();
         if (!Files.exists(f)) {
@@ -76,6 +103,11 @@ public final class KeycapsConfig {
             if (o != null && o.has("captionSize")) {
                 captionSize = Math.max(10, Math.min(100, o.get("captionSize").getAsInt()));
             }
+            if (o != null && o.has("smartConflicts")) smartConflicts = o.get("smartConflicts").getAsBoolean();
+            NOT_CONFLICTS.clear();
+            if (o != null && o.has("notConflicts")) {
+                for (var e : o.getAsJsonArray("notConflicts")) NOT_CONFLICTS.add(e.getAsString());
+            }
         } catch (Exception e) {
             Keycaps.LOGGER.warn("Could not read {}, using the defaults", f, e);
         }
@@ -85,6 +117,10 @@ public final class KeycapsConfig {
         JsonObject o = new JsonObject();
         o.addProperty("keyboardShape", shape.name().toLowerCase(Locale.ROOT));
         o.addProperty("captionSize", captionSize);
+        o.addProperty("smartConflicts", smartConflicts);
+        com.google.gson.JsonArray pairs = new com.google.gson.JsonArray();
+        for (String p : NOT_CONFLICTS) pairs.add(p);
+        o.add("notConflicts", pairs);
         try {
             Files.createDirectories(file().getParent());
             try (Writer w = Files.newBufferedWriter(file(), StandardCharsets.UTF_8)) {

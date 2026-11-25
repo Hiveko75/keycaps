@@ -14,8 +14,17 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   holding the real key switches layer. Litematica, Tweakeroo, MiniHUD and Axiom have their own colours.
 - Clicking a key opens Key Binds; for Litematica, MiniHUD, Tweakeroo and other malilib hotkeys it opens that
   mod's own settings (hotkeys tab).
-- Click a colour in the legend to see only those keys (click again for all); **Conflicts** shows only keys
-  with more than one action.
+- Click a colour in the legend to see only those keys (click again for all); **Conflicts** shows only the
+  keys whose actions clash.
+- **Smart conflict check** (button "Smart: ON/OFF", on by default): a shared key only counts as a conflict
+  when both actions can work at the same time: in the world, in menus, in chat (the inventory key on E and
+  a sort key used only in the inventory don't clash). malilib says this for its hotkeys; for the others it
+  comes from `situations.json` (a copy in `config/keycaps/situations.json` replaces it), which can also say
+  that a mod adds a modifier itself (the emoji picker is Ctrl + E, so it is shown on the Ctrl tab). OFF: every
+  shared key counts, as in Minecraft's Key Binds.
+- **Right-click a key** with more than one action: a list of its pairs, where you tick the pairs that are
+  fine. The key stays a conflict while an unticked pair is left; a tick stops counting once one of the two
+  actions moves to another key. Stored as `notConflicts` in `config/keycaps.json`.
 - Key labels follow the player's keyboard layout (QWERTY, QWERTZ, AZERTY, …); keyboard shape ANSI, ISO
   or JIS (detected, or set by hand).
 - Opens with its own key (Home), also on the pause and title screens, and from other mods through
@@ -23,8 +32,8 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   optional).
 - Action names on the keys in small text (50% of normal by default; slider on the screen).
 - Colour groups: `groups.json` in the jar; a copy in `config/keycaps/groups.json` replaces it. Keyboard
-  shape (`keyboardShape`: `auto`, `ansi`, `iso`) and text size (`captionSize`, percent):
-  `config/keycaps.json`, or the button and slider on the screen.
+  shape (`keyboardShape`: `auto`, `ansi`, `iso`), text size (`captionSize`, percent), `smartConflicts`
+  and `notConflicts`: `config/keycaps.json`, or the buttons, slider and right-click on the screen.
 
 ## Files
 

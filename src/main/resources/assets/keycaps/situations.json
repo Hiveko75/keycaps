@@ -1,0 +1,15 @@
+{
+  "_comment": "When actions can fire, for the smart conflict check: two actions on one key only count as a conflict when they share a situation. Copy this file to config/keycaps/situations.json to change it. A rule's 'match' is a regular expression, searched in '<action id> <category or mod name>' in lower case; the first rule that matches decides. 'when': world (playing, no screen open: the default for key bindings), menu (inventory and container screens), chat, passive (only changes what is shown while held: never a conflict), or any other word for a situation of its own. 'adds': ctrl / alt / shift when the mod adds that key itself, so the action is shown on that layer. malilib hotkeys already say whether they also work in screens.",
+  "rules": [
+    {"match": "^twemoji\\.key\\.picker", "when": ["chat"], "adds": "ctrl"},
+    {"match": "^key\\.inventory ", "when": ["world", "menu"]},
+    {"match": "^key\\.hotbar\\.\\d", "when": ["world", "menu"]},
+    {"match": "^key\\.(drop|swapoffhand) ", "when": ["world", "menu"]},
+    {"match": "^key\\.(screenshot|fullscreen) ", "when": ["world", "menu", "chat"]},
+    {"match": "^key\\.jade\\.show_details", "when": ["passive"]},
+    {"match": "^key\\.clientsort\\.(op\\.|cancelauto)", "when": ["menu"]},
+    {"match": "^key\\.lockedinslots\\.", "when": ["menu"]},
+    {"match": "^key\\.optigui\\.inspect", "when": ["menu"]},
+    {"match": "^flashback\\.keybinds\\.timeline_", "when": ["replay"]}
+  ]
+}

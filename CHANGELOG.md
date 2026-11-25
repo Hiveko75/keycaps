@@ -8,7 +8,7 @@ First version, Minecraft 26.3 (the other versions follow).
   with the numeric keypad and the three mouse buttons, in a window that fills the screen with a margin
   (like Better Advancements; the keypad is left out when the window is too small for it). Every bound
   key is coloured by group, with a short caption on it and everything on it in the hover text with the
-  mod it comes from. Two actions on the same key in the same layer show in red.
+  mod it comes from. Actions that clash on the same key show in red.
 - **Layers:** tabs for plain keys, Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +). Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer. On the plain layer a key that only works with a
   modifier shows it in grey ("Ctrl: Drop").
@@ -19,7 +19,15 @@ First version, Minecraft 26.3 (the other versions follow).
   for Tweakeroo's Z, 1). Holding that key shows its tab. Litematica, Tweakeroo, MiniHUD and Axiom have their
   own colours.
 - **Filters:** clicking a colour in the legend shows only that group's keys (click it again for all keys);
-  the **Conflicts: N** button shows only the keys with more than one action in the layer shown.
+  the **Conflicts: N** button shows only the keys whose actions clash in the layer shown.
+- **Smart conflict check** ("Smart: ON", switchable): a shared key only counts as a conflict when both
+  actions can work at the same time (in the world, in menus, in chat). malilib hotkeys say this
+  themselves; `situations.json` says it for the rest (inventory, hotbar, drop and offhand keys also work
+  in menus; ClientSort, Locked In Slots and OptiGUI's inspect key only in menus; Jade's details key only
+  changes what is shown; Flashback's timeline keys only in its editor) and that the emoji picker is really
+  Ctrl + E (shown on the Ctrl tab). The hover text says when an action works if it is not just in the world.
+- **Right-click a key** with more than one action to tick the pairs that are not conflicts; the key stays a
+  conflict while an unticked pair is left. Saved in `config/keycaps.json` (`notConflicts`).
   Keys the drawing doesn't have (extra mouse buttons, F13 and up) are listed under the keyboard.
 - **Action names in small text** (50% of normal by default) with a slider in the footer; the steps are whole
   screen pixels, so the text stays sharp, and as many lines as fit (up to three) are used.

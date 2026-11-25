@@ -9,6 +9,7 @@ import io.github.hiveko.keycaps.model.Groups;
 import io.github.hiveko.keycaps.model.KeyboardShape;
 import io.github.hiveko.keycaps.model.Layer;
 import io.github.hiveko.keycaps.model.ModScreens;
+import io.github.hiveko.keycaps.model.Situations;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -36,7 +37,9 @@ import java.util.Set;
 /**
  * The keyboard map: a tenkeyless keyboard (plus the three mouse buttons) coloured by what each key does,
  * with tabs for the Ctrl, Alt, Shift and F3 layers. Holding the real modifier key shows its layer;
- * hovering a key lists everything on it; clicking opens Minecraft's Key Binds screen.
+ * hovering a key lists everything on it; clicking opens Minecraft's Key Binds screen (or the malilib mod's
+ * settings). A key is a conflict when two of its actions can fire at the same time: with the smart check on,
+ * only actions that share a situation ({@link Situations}) count; right-click marks pairs as fine.
  */
 public class KeycapsScreen extends Screen {
     /** Space left around the window, like Better Advancements; the window fills the rest of the screen. */
@@ -62,7 +65,9 @@ public class KeycapsScreen extends Screen {
     /** Filters: only one colour group (legend click), or only keys with more than one action. */
     private String filterGroup;
     private boolean conflictsOnly;
-    private Button conflictsButton;
+    private Button conflictsButton, smartButton;
+    /** The right-click list of pairs on one key, or null. */
+    private PairsPopup popup;
     private final List<LegendHit> legendHits = new ArrayList<>();
     private String hoveredLegend;
 
@@ -82,6 +87,8 @@ public class KeycapsScreen extends Screen {
     @Override
     protected void init() {
         Groups.load();
+        Situations.load();
+        popup = null;
         entries = Collector.collect();
         byKey.clear();
         for (Entry e : entries) {
@@ -143,11 +150,12 @@ public class KeycapsScreen extends Screen {
         elsewhereY = kbY + kbH + 3;
         legendY = elsewhereY + 11;
 
-        // footer: keyboard shape, Key Binds, conflicts, caption size, Done
+        // footer: keyboard shape, Key Binds, conflicts, smart check, caption size, Done
         int by = py + ph - 24;
-        int fw = pw - 12 - 4 * 4;
-        int shapeW = fw * 27 / 100, keysW = fw * 18 / 100, conflictsW = fw * 19 / 100, sizeW = fw * 20 / 100;
-        int doneW = fw - shapeW - keysW - conflictsW - sizeW;
+        int fw = pw - 12 - 5 * 4;
+        int shapeW = fw * 22 / 100, keysW = fw * 15 / 100, conflictsW = fw * 17 / 100, smartW = fw * 14 / 100,
+                sizeW = fw * 18 / 100;
+        int doneW = fw - shapeW - keysW - conflictsW - smartW - sizeW;
         int fx = px + 6;
         shapeButton = addRenderableWidget(Button.builder(shapeLabel(), b -> {
             KeycapsConfig.Shape next = switch (KeycapsConfig.shape()) {
@@ -167,6 +175,11 @@ public class KeycapsScreen extends Screen {
             if (conflictsOnly) filterGroup = null;
         }).bounds(fx, by, conflictsW, 20).tooltip(Tooltip.create(Component.translatable("keycaps.tooltip.conflicts"))).build());
         fx += conflictsW + 4;
+        smartButton = addRenderableWidget(Button.builder(smartLabel(), b -> {
+            KeycapsConfig.setSmartConflicts(!KeycapsConfig.smartConflicts());
+            b.setMessage(smartLabel());
+        }).bounds(fx, by, smartW, 20).tooltip(Tooltip.create(Component.translatable("keycaps.tooltip.smart"))).build());
+        fx += smartW + 4;
         addRenderableWidget(new CaptionSizeSlider(fx, by, sizeW, 20));
         fx += sizeW + 4;
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> onClose())
@@ -215,6 +228,11 @@ public class KeycapsScreen extends Screen {
             if (t.getKey() == selected) label = label.withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE);
             t.getValue().setMessage(label);
         }
+    }
+
+    private static Component smartLabel() {
+        return Component.translatable("keycaps.button.smart",
+                KeycapsConfig.smartConflicts() ? CommonComponents.OPTION_ON : CommonComponents.OPTION_OFF);
     }
 
     private Component shapeLabel() {
@@ -267,12 +285,18 @@ public class KeycapsScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         Layer view = view();
+        int realMouseX = mouseX, realMouseY = mouseY;
         float cs = captionScale();
 
         g.fill(px, py, px + pw, py + ph, 0xD0101318);
         g.outline(px, py, pw, ph, 0xFF3C434C);
         g.centeredText(font, title, width / 2, py + 6, TEXT);
 
+        if (popup != null) {
+            // the list covers the keyboard: nothing under it is hovered
+            mouseX = -1000;
+            mouseY = -1000;
+        }
         hoveredKey = null;
         for (KeyboardShape.Cap c : caps) {
             int x0 = kbX + Math.round(c.x() * unit), y0 = kbY + Math.round(c.y() * unit);
@@ -287,7 +311,9 @@ public class KeycapsScreen extends Screen {
 
         super.extractRenderState(g, mouseX, mouseY, partialTick);
 
-        if (hoveredKey != null) {
+        if (popup != null) {
+            popup.extract(g, realMouseX, realMouseY);
+        } else if (hoveredKey != null) {
             g.setComponentTooltipForNextFrame(font, keyTooltip(hoveredKey), mouseX, mouseY);
         } else if (hoveredElsewhere) {
             g.setComponentTooltipForNextFrame(font, elsewhereTooltip(), mouseX, mouseY);
@@ -319,7 +345,7 @@ public class KeycapsScreen extends Screen {
 
     private void drawCap(GuiGraphicsExtractor g, KeyboardShape.Cap c, int x0, int y0, int x1, int y1, Layer view, boolean hover, float cs) {
         List<Entry> all = on(c.key(), view);
-        boolean conflict = distinctIds(all) > 1;
+        boolean conflict = isConflict(c.key(), view);
         List<Entry> here = conflictsOnly && !conflict ? List.of() : filtered(all);
         Layer modifierLayer = Layer.ofModifier(c.key());
         boolean heldModifier = view != Layer.NORMAL && (modifierLayer == view
@@ -396,6 +422,51 @@ public class KeycapsScreen extends Screen {
         return font.plainSubstrByWidth(s, Math.max(0, maxWidth - font.width("…"))) + "…";
     }
 
+    /** Two different actions on one key in one layer, and whether they count as a conflict. */
+    private record Pair(Entry a, Entry b, boolean together, boolean marked, String stored) {
+        boolean counts() {
+            return together && !marked;
+        }
+    }
+
+    /**
+     * Every pair of different actions on this key in this layer. "together": they can fire at the same time
+     * (always, with the smart check off); "marked": right-clicked as not a conflict.
+     */
+    private List<Pair> pairs(String key, Layer layer) {
+        Map<String, Entry> byId = new LinkedHashMap<>();
+        for (Entry e : on(key, layer)) byId.putIfAbsent(e.id(), e);
+        List<Entry> list = new ArrayList<>(byId.values());
+        List<Pair> out = new ArrayList<>();
+        boolean smart = KeycapsConfig.smartConflicts();
+        for (int i = 0; i < list.size(); i++) {
+            for (int j = i + 1; j < list.size(); j++) {
+                Entry a = list.get(i), b = list.get(j);
+                String stored = KeycapsConfig.pair(layer.id, key, a.id(), b.id());
+                out.add(new Pair(a, b, !smart || Situations.overlap(a.when(), b.when()), KeycapsConfig.notConflict(stored), stored));
+            }
+        }
+        return out;
+    }
+
+    private boolean isConflict(String key, Layer layer) {
+        if (distinctIds(on(key, layer)) < 2) return false;
+        for (Pair p : pairs(key, layer)) if (p.counts()) return true;
+        return false;
+    }
+
+    /** The actions on this key and layer that are part of a conflict (red in the hover text). */
+    private Set<String> clashingIds(String key, Layer layer) {
+        Set<String> out = new HashSet<>();
+        if (distinctIds(on(key, layer)) < 2) return out;
+        for (Pair p : pairs(key, layer)) {
+            if (!p.counts()) continue;
+            out.add(p.a().id());
+            out.add(p.b().id());
+        }
+        return out;
+    }
+
     private static int distinctIds(List<Entry> list) {
         Set<String> ids = new HashSet<>();
         for (Entry e : list) ids.add(e.id());
@@ -405,7 +476,7 @@ public class KeycapsScreen extends Screen {
     /** The action the key shows (its caption): first in the layer shown, else the grey one from another layer. */
     private Entry shownEntry(String key, Layer view) {
         List<Entry> all = on(key, view);
-        List<Entry> here = conflictsOnly && distinctIds(all) < 2 ? List.of() : filtered(all);
+        List<Entry> here = conflictsOnly && !isConflict(key, view) ? List.of() : filtered(all);
         if (!here.isEmpty()) return here.get(0);
         if (!conflictsOnly && view == Layer.NORMAL) return firstOtherLayer(key);
         return null;
@@ -437,10 +508,7 @@ public class KeycapsScreen extends Screen {
     private void updateConflictsButton(Layer view) {
         if (conflictsButton == null) return;
         int n = 0;
-        for (Map<Layer, List<Entry>> m : byKey.values()) {
-            List<Entry> l = m.get(view);
-            if (l != null && distinctIds(l) > 1) n++;
-        }
+        for (String key : byKey.keySet()) if (isConflict(key, view)) n++;
         MutableComponent label = Component.translatable("keycaps.button.conflicts", n);
         if (conflictsOnly) label = label.withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE);
         conflictsButton.setMessage(label);
@@ -463,7 +531,7 @@ public class KeycapsScreen extends Screen {
         for (Map.Entry<String, Map<Layer, List<Entry>>> k : byKey.entrySet()) {
             if (capKeys.contains(k.getKey())) continue;
             List<Entry> l = k.getValue().get(view);
-            if (l == null || (conflictsOnly && distinctIds(l) < 2)) continue;
+            if (l == null || (conflictsOnly && !isConflict(k.getKey(), view))) continue;
             l = filtered(l);
             if (l.isEmpty()) continue;
             items.add(Labels.keyName(k.getKey()).getString() + ": " + Labels.caption(l.get(0)));
@@ -569,27 +637,138 @@ public class KeycapsScreen extends Screen {
         boolean any = false;
         for (Layer l : layers) {
             List<Entry> list = on(key, l);
-            boolean clash = distinctIds(list) > 1;
+            Set<String> clash = clashingIds(key, l);
             for (Entry e : list) {
                 any = true;
                 MutableComponent line = Component.empty().append(prefix(l)).append(e.name().copy());
-                line = line.withStyle(clash ? ChatFormatting.RED : ChatFormatting.WHITE);
+                line = line.withStyle(clash.contains(e.id()) ? ChatFormatting.RED : ChatFormatting.WHITE);
                 line.append(Component.literal("  " + e.source().getString()).withStyle(ChatFormatting.DARK_GRAY));
+                Component when = whenText(e);
+                if (when != null) line.append(Component.literal(" · ").append(when).withStyle(ChatFormatting.DARK_GRAY));
                 out.add(line);
                 if (e.note() != null) out.add(Component.literal("   ").append(e.note()).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
             }
         }
         if (!any) out.add(Component.translatable("keycaps.tooltip.nothing").withStyle(ChatFormatting.GRAY));
-        String mod = ModScreens.modOf(shownEntry(key, view()));
+        Layer view = view();
+        String mod = ModScreens.modOf(shownEntry(key, view));
         out.add((mod != null ? Component.translatable("keycaps.tooltip.click.mod", ModScreens.modName(mod))
                 : Component.translatable("keycaps.tooltip.click")).withStyle(ChatFormatting.DARK_GRAY));
+        if (distinctIds(on(key, view)) > 1) {
+            out.add(Component.translatable("keycaps.tooltip.rightclick").withStyle(ChatFormatting.DARK_GRAY));
+        }
         return out;
+    }
+
+    /** When the action works, unless it is just "in the world" (most actions): "in menus", "in chat", … */
+    private static Component whenText(Entry e) {
+        if (e.when().equals(Situations.IN_WORLD)) return null;
+        MutableComponent out = Component.empty();
+        boolean first = true;
+        for (String s : e.when()) {
+            if (!first) out.append(", ");
+            first = false;
+            String k = "keycaps.when." + s;
+            out.append(net.minecraft.locale.Language.getInstance().has(k) ? Component.translatable(k) : Component.literal(s));
+        }
+        return out;
+    }
+
+    // ---------------------------------------------------------------- right-click: pairs that are fine
+
+    /**
+     * The pairs of actions on one key, each with a box to tick when the pair is not a conflict. Pairs the
+     * smart check already lets through ("never at the same time") are shown greyed out.
+     */
+    private final class PairsPopup {
+        private static final int ROW = 12;
+        private final String key;
+        private final Layer layer;
+        private final int x, y, w, h;
+
+        PairsPopup(String key, Layer layer, int mouseX, int mouseY) {
+            this.key = key;
+            this.layer = layer;
+            int width = font.width(title()) + 12;
+            for (Pair p : pairs(key, layer)) width = Math.max(width, 22 + font.width(rowText(p)) + 8);
+            width = Math.max(width, font.width(Component.translatable("keycaps.pairs.hint")) + 12);
+            w = Math.min(width, pw - 12);
+            h = 6 + 11 + pairs(key, layer).size() * ROW + 4 + 10 + 4;
+            x = Math.max(px + 6, Math.min(mouseX + 4, px + pw - 6 - w));
+            y = Math.max(py + 6, Math.min(mouseY + 4, py + ph - 6 - h));
+        }
+
+        private Component title() {
+            return Component.translatable("keycaps.pairs.title", Component.empty().append(prefix(layer)).append(Labels.keyName(key)));
+        }
+
+        private String rowText(Pair p) {
+            String text = p.a().name().getString() + "  ↔  " + p.b().name().getString();
+            if (!p.together()) text += "  (" + Component.translatable("keycaps.pairs.apart").getString() + ")";
+            return text;
+        }
+
+        boolean contains(double mx, double my) {
+            return mx >= x && mx < x + w && my >= y && my < y + h;
+        }
+
+        private int rowAt(double my) {
+            int top = y + 6 + 11;
+            if (my < top) return -1;
+            int i = (int) ((my - top) / ROW);
+            return i < pairs(key, layer).size() ? i : -1;
+        }
+
+        void extract(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+            g.nextStratum();
+            g.fill(x, y, x + w, y + h, 0xF0101318);
+            g.outline(x, y, w, h, 0xFFFFFFFF);
+            g.text(font, ellipsize(title().getString(), w - 12), x + 6, y + 6, TEXT, false);
+            List<Pair> list = pairs(key, layer);
+            int hover = contains(mouseX, mouseY) ? rowAt(mouseY) : -1;
+            for (int i = 0; i < list.size(); i++) {
+                Pair p = list.get(i);
+                int ry = y + 6 + 11 + i * ROW;
+                if (i == hover && p.together()) g.fill(x + 2, ry - 1, x + w - 2, ry + ROW - 1, 0xFF2C333B);
+                // the box: ticked = not a conflict; greyed when the smart check already lets the pair through
+                int box = p.together() ? 0xFFD0D0D0 : 0xFF4A5058;
+                g.outline(x + 6, ry, 9, 9, box);
+                if (p.marked() || !p.together()) g.text(font, "✔", x + 7, ry + 1, p.together() ? 0xFF7FD86A : 0xFF6B737C, false);
+                int color = !p.together() ? TEXT_FAINT : p.marked() ? TEXT_DIM : 0xFFFF8A80;
+                g.text(font, font.plainSubstrByWidth(rowText(p), w - 30), x + 20, ry + 1, color, false);
+            }
+            g.text(font, ellipsize(Component.translatable("keycaps.pairs.hint").getString(), w - 12), x + 6, y + h - 13, TEXT_FAINT, false);
+        }
+
+        /** Ticks or unticks the pair under the mouse; true when the click was inside the list. */
+        boolean click(double mx, double my) {
+            if (!contains(mx, my)) return false;
+            int i = rowAt(my);
+            List<Pair> list = pairs(key, layer);
+            if (i >= 0 && list.get(i).together()) {
+                Pair p = list.get(i);
+                KeycapsConfig.setNotConflict(p.stored(), !p.marked());
+                minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                        net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            }
+            return true;
+        }
     }
 
     // ---------------------------------------------------------------- input
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (popup != null) {
+            // a click outside the list closes it
+            if (!popup.click(event.x(), event.y())) popup = null;
+            return true;
+        }
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT && hoveredKey != null
+                && distinctIds(on(hoveredKey, view())) > 1) {
+            popup = new PairsPopup(hoveredKey, view(), (int) event.x(), (int) event.y());
+            return true;
+        }
         if (super.mouseClicked(event, doubleClick)) return true;
         if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             for (LegendHit hit : legendHits) {
@@ -612,6 +791,10 @@ public class KeycapsScreen extends Screen {
     /** The open key (Home by default) closes the map again. */
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (popup != null && event.key() == InputConstants.KEY_ESCAPE) {
+            popup = null;
+            return true;
+        }
         if (Keycaps.openKey != null && !Keycaps.openKey.isUnbound() && Keycaps.openKey.matches(event)) {
             onClose();
             return true;
