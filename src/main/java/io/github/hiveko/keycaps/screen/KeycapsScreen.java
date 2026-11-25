@@ -10,6 +10,7 @@ import io.github.hiveko.keycaps.model.Layer;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
@@ -109,8 +110,11 @@ public class KeycapsScreen extends Screen {
         elsewhereY = kbY + Math.round(KeyboardShape.HEIGHT * unit) + 3;
         legendY = elsewhereY + 11;
 
-        // footer
+        // footer: keyboard shape, Key Binds, caption size, Done
         int by = py + ph - 24;
+        int fw = pw - 12 - 3 * 4;
+        int shapeW = fw * 31 / 100, keysW = fw * 23 / 100, sizeW = fw * 26 / 100, doneW = fw - shapeW - keysW - sizeW;
+        int fx = px + 6;
         shapeButton = addRenderableWidget(Button.builder(shapeLabel(), b -> {
             KeycapsConfig.Shape next = switch (KeycapsConfig.shape()) {
                 case AUTO -> KeycapsConfig.Shape.ANSI;
@@ -119,11 +123,47 @@ public class KeycapsScreen extends Screen {
             };
             KeycapsConfig.setShape(next);
             rebuildWidgets();
-        }).bounds(px + 6, by, 140, 20).build());
+        }).bounds(fx, by, shapeW, 20).build());
+        fx += shapeW + 4;
         addRenderableWidget(Button.builder(Component.translatable("controls.keybinds"),
-                b -> openKeyBinds()).bounds(px + 150, by, 120, 20).build());
+                b -> openKeyBinds()).bounds(fx, by, keysW, 20).build());
+        fx += keysW + 4;
+        addRenderableWidget(new CaptionSizeSlider(fx, by, sizeW, 20));
+        fx += sizeW + 4;
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, b -> onClose())
-                .bounds(px + pw - 6 - 100, by, 100, 20).build());
+                .bounds(fx, by, doneW, 20).build());
+    }
+
+    /**
+     * Size of the action names on the keys. The steps are whole screen pixels per font pixel (1 … GUI scale),
+     * so the small text stays sharp; shown as a percentage of normal text.
+     */
+    private final class CaptionSizeSlider extends AbstractSliderButton {
+        private final int steps;
+
+        CaptionSizeSlider(int x, int y, int w, int h) {
+            super(x, y, w, h, Component.empty(), 0);
+            steps = Math.max(1, minecraft.getWindow().getGuiScale());
+            int n = captionPixels();
+            value = steps <= 1 ? 1 : (n - 1) / (double) (steps - 1);
+            active = steps > 1;
+            updateMessage();
+        }
+
+        private int stepOfValue() {
+            return steps <= 1 ? 1 : 1 + (int) Math.round(value * (steps - 1));
+        }
+
+        @Override
+        protected void updateMessage() {
+            int percent = Math.round(100f * stepOfValue() / steps);
+            setMessage(Component.translatable("keycaps.button.caption", percent));
+        }
+
+        @Override
+        protected void applyValue() {
+            KeycapsConfig.setCaptionSize(Math.round(100f * stepOfValue() / steps));
+        }
     }
 
     private void updateTabs() {
@@ -202,10 +242,22 @@ public class KeycapsScreen extends Screen {
         }
     }
 
-    /** Text inside the keys is drawn smaller: one screen pixel less per font pixel than the GUI scale. */
+    /** The key's own label is drawn a little smaller: one screen pixel less per font pixel than the GUI scale. */
     private float captionScale() {
         int s = minecraft.getWindow().getGuiScale();
         return s >= 2 ? (s - 1f) / s : 1f;
+    }
+
+    /** Screen pixels per font pixel for the action names, from the caption size setting (50% by default). */
+    private int captionPixels() {
+        int s = Math.max(1, minecraft.getWindow().getGuiScale());
+        int n = (int) Math.floor(s * KeycapsConfig.captionSize() / 100.0 + 0.05);
+        return Math.max(1, Math.min(s, n));
+    }
+
+    /** Scale of the action names on the keys (whole screen pixels per font pixel, so the text stays sharp). */
+    private float functionScale() {
+        return captionPixels() / (float) Math.max(1, minecraft.getWindow().getGuiScale());
     }
 
     private void drawCap(GuiGraphicsExtractor g, KeyboardShape.Cap c, int x0, int y0, int x1, int y1, Layer view, boolean hover, float cs) {
@@ -236,26 +288,34 @@ public class KeycapsScreen extends Screen {
         g.outline(x0, y0, x1 - x0, y1 - y0, border);
 
         // key label, top left
+        int innerPx = x1 - x0 - 3;
         g.pose().pushMatrix();
         g.pose().translate(x0 + 2, y0 + 2);
         g.pose().scale(cs, cs);
-        int innerW = (int) ((x1 - x0 - 3) / cs);
-        String label = font.plainSubstrByWidth(Labels.keyLabel(c.key()), innerW);
+        String label = font.plainSubstrByWidth(Labels.keyLabel(c.key()), (int) (innerPx / cs));
         g.text(font, label, 0, 0, here.isEmpty() ? TEXT_DIM : 0xFFFFFFFF, false);
-        // caption, up to two lines under it
+        g.pose().popMatrix();
+        // action name under it, in smaller text (caption size setting), as many lines as fit (at most 3)
         if (caption != null) {
+            float fs = functionScale();
+            float labelH = (font.lineHeight - 1) * cs + 1;
+            int innerW = (int) (innerPx / fs);
+            float lineH = font.lineHeight * fs;
+            int maxLines = Math.max(1, Math.min(3, (int) ((y1 - y0 - 3 - labelH) / lineH)));
             List<FormattedCharSequence> lines = font.split(Component.literal(caption), innerW);
-            int maxLines = Math.max(1, (int) (((y1 - y0 - 3) / cs - font.lineHeight) / font.lineHeight));
-            int n = Math.min(lines.size(), Math.min(2, maxLines));
+            int n = Math.min(lines.size(), maxLines);
+            g.pose().pushMatrix();
+            g.pose().translate(x0 + 2, y0 + 2 + labelH);
+            g.pose().scale(fs, fs);
             for (int i = 0; i < n; i++) {
                 FormattedCharSequence line = lines.get(i);
                 if (i == n - 1 && lines.size() > n) {
-                    line =Component.literal(ellipsize(lastLineText(caption, lines, i), innerW)).getVisualOrderText();
+                    line = Component.literal(ellipsize(lastLineText(caption, lines, i), innerW)).getVisualOrderText();
                 }
-                g.text(font, line, 0, font.lineHeight * (i + 1), textColor, false);
+                g.text(font, line, 0, font.lineHeight * i, textColor, false);
             }
+            g.pose().popMatrix();
         }
-        g.pose().popMatrix();
     }
 
     private String lastLineText(String caption, List<FormattedCharSequence> lines, int index) {

@@ -7,6 +7,7 @@
   "keycaps.layer.alt": "Alt +",
   "keycaps.layer.shift": "Shift +",
   "keycaps.layer.f3": "%s +",
+  "keycaps.button.caption": "Text on keys: %s%%",
   "keycaps.button.shape": "Keyboard: %s",
   "keycaps.shape.auto": "Auto (%s)",
   "keycaps.shape.ansi": "ANSI",

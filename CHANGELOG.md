@@ -12,8 +12,10 @@ First version, Minecraft 26.3 (the other versions follow).
   modifier shows it in grey ("Ctrl: Drop").
 - **Reads every binding live:** Minecraft's key mappings (and so every mod in the Key Binds menu), the
   debug combinations, Multi Key Bindings' extra bindings and modifiers, and malilib hotkeys (MiniHUD,
-  Tweakeroo, Litematica, …; combinations like "hold H, press C" sit on the last key with a note). Keys the
-  drawing doesn't have (numpad, extra mouse buttons) are listed under the keyboard.
+  Tweakeroo, Litematica, …; only hotkeys on a single key, combinations like Ctrl + X or "hold B, press C"
+  are left out). Keys the drawing doesn't have (numpad, extra mouse buttons) are listed under the keyboard.
+- **Action names in small text** (50% of normal by default) with a slider in the footer; the steps are whole
+  screen pixels, so the text stays sharp, and as many lines as fit (up to three) are used.
 - **Keyboard layout:** the letters on the keys follow the system layout (QWERTZ, AZERTY, …). The shape
   is ANSI or ISO, guessed from the computer's region or chosen with the button (`config/keycaps.json`).
 - Clicking a key opens Key Binds; coming back refreshes the map.

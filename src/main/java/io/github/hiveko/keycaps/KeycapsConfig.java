@@ -13,7 +13,10 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Set;
 
-/** {@code config/keycaps.json}: the keyboard shape (auto, ansi or iso). */
+/**
+ * {@code config/keycaps.json}: the keyboard shape (auto, ansi or iso) and the size of the action names on
+ * the keys, in percent of normal text (50 by default).
+ */
 public final class KeycapsConfig {
     public enum Shape { AUTO, ANSI, ISO }
 
@@ -22,7 +25,10 @@ public final class KeycapsConfig {
     private static final Set<String> ANSI_COUNTRIES = Set.of(
             "US", "CA", "AU", "NZ", "PH", "IN", "CN", "TW", "HK", "KR", "JP", "TH", "SG", "MY", "ID", "VN", "IL");
 
+    public static final int DEFAULT_CAPTION_SIZE = 50;
+
     private static Shape shape = Shape.AUTO;
+    private static int captionSize = DEFAULT_CAPTION_SIZE;
 
     private KeycapsConfig() {}
 
@@ -46,6 +52,16 @@ public final class KeycapsConfig {
         save();
     }
 
+    /** Size of the action names on the keys, in percent of normal text (10 to 100). */
+    public static int captionSize() {
+        return captionSize;
+    }
+
+    public static void setCaptionSize(int percent) {
+        captionSize = Math.max(10, Math.min(100, percent));
+        save();
+    }
+
     public static void load() {
         Path f = file();
         if (!Files.exists(f)) {
@@ -57,6 +73,9 @@ public final class KeycapsConfig {
             if (o != null && o.has("keyboardShape")) {
                 shape = Shape.valueOf(o.get("keyboardShape").getAsString().toUpperCase(Locale.ROOT));
             }
+            if (o != null && o.has("captionSize")) {
+                captionSize = Math.max(10, Math.min(100, o.get("captionSize").getAsInt()));
+            }
         } catch (Exception e) {
             Keycaps.LOGGER.warn("Could not read {}, using the defaults", f, e);
         }
@@ -65,6 +84,7 @@ public final class KeycapsConfig {
     public static void save() {
         JsonObject o = new JsonObject();
         o.addProperty("keyboardShape", shape.name().toLowerCase(Locale.ROOT));
+        o.addProperty("captionSize", captionSize);
         try {
             Files.createDirectories(file().getParent());
             try (Writer w = Files.newBufferedWriter(file(), StandardCharsets.UTF_8)) {

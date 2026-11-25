@@ -8,7 +8,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.sdl.SDLKeyboard;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -220,7 +219,8 @@ public final class Collector {
         private static void add(List<Entry> out, String modName, Object hotkey) throws Exception {
             Object keybind = getKeybind.invoke(hotkey);
             List<?> keys = (List<?>) getKeys.invoke(keybind);
-            if (keys == null || keys.isEmpty()) return;
+            // Only single-key hotkeys: combinations (Ctrl + X, or B + C sequences) are left out.
+            if (keys == null || keys.size() != 1) return;
             Object context = getContext.invoke(getSettings.invoke(keybind));
             if (context instanceof Enum<?> e && "GUI".equals(e.name())) return; // only inside its own screens
 
@@ -242,17 +242,15 @@ public final class Collector {
         }
 
         /**
-         * malilib 26.3 stores SDL key codes (the layout's letters, so "Z" follows the player's layout) and
-         * mouse buttons as Minecraft's button number minus 100 (left = -99).
+         * malilib 26.3 stores SDL scan codes (the key's position, like Minecraft's own key values: A = 4,
+         * Left Alt = 226) and mouse buttons as Minecraft's button number minus 100 (left = -99).
          */
         private static String keyName(int code) {
             if (code >= -100 && code < 0) {
                 return InputConstants.Type.MOUSE.getOrCreate(code + 100).getName();
             }
             if (code <= 0) return null;
-            int scancode = SDLKeyboard.SDL_GetScancodeFromKey(code, null);
-            if (scancode <= 0) return null;
-            return InputConstants.Type.KEYBOARD.getOrCreate(scancode).getName();
+            return InputConstants.Type.KEYBOARD.getOrCreate(code).getName();
         }
     }
 

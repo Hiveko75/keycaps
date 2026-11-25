@@ -7,6 +7,7 @@
   "keycaps.layer.alt": "Alt +",
   "keycaps.layer.shift": "Shift +",
   "keycaps.layer.f3": "%s +",
+  "keycaps.button.caption": "Felirat: %s%%",
   "keycaps.button.shape": "Billentyűzet: %s",
   "keycaps.shape.auto": "Auto (%s)",
   "keycaps.shape.ansi": "ANSI",
