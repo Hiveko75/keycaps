@@ -216,11 +216,16 @@ public final class Collector {
             }
         }
 
+        /**
+         * One malilib hotkey. A single key goes on the plain keyboard. Combinations get their own tabs, so the
+         * plain keyboard stays single keys only: Ctrl / Alt / Shift + key go to those layers, debug key + key
+         * to the F3 layer, and a sequence that starts with an ordinary key (Litematica's B, C) to that key's
+         * "B +" layer. Other sequences (two ordinary keys before the last) are left out.
+         */
         private static void add(List<Entry> out, String modName, Object hotkey) throws Exception {
             Object keybind = getKeybind.invoke(hotkey);
             List<?> keys = (List<?>) getKeys.invoke(keybind);
-            // Only single-key hotkeys: combinations (Ctrl + X, or B + C sequences) are left out.
-            if (keys == null || keys.size() != 1) return;
+            if (keys == null || keys.isEmpty()) return;
             Object context = getContext.invoke(getSettings.invoke(keybind));
             if (context instanceof Enum<?> e && "GUI".equals(e.name())) return; // only inside its own screens
 
@@ -231,14 +236,24 @@ public final class Collector {
                 names.add(n);
             }
             String main = names.get(names.size() - 1);
-            List<String> held = names.subList(0, names.size() - 1);
+            List<String> held = new ArrayList<>(names.subList(0, names.size() - 1));
 
             String hotkeyName = (String) getName.invoke(hotkey);
             String pretty = (String) getPrettyName.invoke(hotkey);
             String id = modName.toLowerCase().replace(' ', '_') + ":" + hotkeyName;
             Component source = modName.isEmpty() ? SOURCE_FALLBACK : Component.literal(modName);
             String group = Groups.groupOf(id, modName);
-            addWithModifiers(out, main, new ArrayList<>(held), id, Component.literal(pretty), source, group);
+            Component name = Component.literal(pretty);
+
+            List<String> ordinary = new ArrayList<>();
+            for (String h : held) if (Layer.ofModifier(h) == null) ordinary.add(h);
+            if (ordinary.isEmpty()) {
+                addWithModifiers(out, main, held, id, name, source, group);
+            } else if (held.size() == 1) {
+                String debugKey = KeyMappingHelper.getBoundKeyOf(Minecraft.getInstance().options.keyDebugModifier).getName();
+                Layer layer = held.get(0).equals(debugKey) ? Layer.F3 : Layer.hold(held.get(0));
+                out.add(new Entry(layer, main, id, name, source, group, null));
+            }
         }
 
         /**

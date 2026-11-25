@@ -8,8 +8,10 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   everything bound to a key in its hover text (with the mod's name; conflicts in red). Home closes it again.
 - Reads all bindings live: Minecraft's own key bindings (and so every mod that uses the Key Binds menu),
   Minecraft's debug combinations (F3 + …), **Multi Key Bindings**' extra bindings and modifiers, and
-  **malilib** hotkeys on a single key (MiniHUD, Tweakeroo, Litematica, …).
-- Layers for Ctrl +, Alt + and F3 + combinations; holding the real key switches layer.
+  **malilib** hotkeys (MiniHUD, Tweakeroo, Litematica, …): single keys on the plain keyboard,
+  combinations on their own tabs ("B +" for Litematica's B, C sequences; "Z +" for Tweakeroo's Z, 1).
+- Layers for Ctrl +, Alt +, Shift + and F3 + combinations and for malilib sequences (B +, Z +, …);
+  holding the real key switches layer. Litematica and Tweakeroo have their own colours.
 - Key labels follow the player's keyboard layout (QWERTY, QWERTZ, AZERTY, …); keyboard shape ANSI, ISO
   or JIS (detected, or set by hand).
 - Opens with its own key (Home), also on the pause and title screens, and from other mods through

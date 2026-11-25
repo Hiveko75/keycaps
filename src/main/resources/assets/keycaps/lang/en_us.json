@@ -7,6 +7,7 @@
   "keycaps.layer.alt": "Alt +",
   "keycaps.layer.shift": "Shift +",
   "keycaps.layer.f3": "%s +",
+  "keycaps.layer.hold": "%s +",
   "keycaps.button.caption": "Text on keys: %s%%",
   "keycaps.button.shape": "Keyboard: %s",
   "keycaps.shape.auto": "Auto (%s)",
@@ -28,6 +29,8 @@
   "keycaps.group.social": "Chat & players",
   "keycaps.group.graphics": "Graphics",
   "keycaps.group.tools": "Tools & debug",
+  "keycaps.group.litematica": "Litematica",
+  "keycaps.group.tweakeroo": "Tweakeroo",
   "keycaps.group.creative": "Creative",
   "keycaps.group.other": "Other",
 

@@ -23,7 +23,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -52,7 +51,7 @@ public class KeycapsScreen extends Screen {
     private final Set<String> capKeys = new HashSet<>();
     private List<Layer> layers = List.of();
     private Layer selected = Layer.NORMAL;
-    private final Map<Layer, Button> tabs = new EnumMap<>(Layer.class);
+    private final Map<Layer, Button> tabs = new LinkedHashMap<>();
     private Button shapeButton;
 
     private int px, py, pw, ph, unit, kbX, kbY, elsewhereY, legendY;
@@ -72,7 +71,7 @@ public class KeycapsScreen extends Screen {
         entries = Collector.collect();
         byKey.clear();
         for (Entry e : entries) {
-            byKey.computeIfAbsent(e.key(), k -> new EnumMap<>(Layer.class))
+            byKey.computeIfAbsent(e.key(), k -> new HashMap<>())
                     .computeIfAbsent(e.layer(), l -> new ArrayList<>()).add(e);
         }
         Set<Layer> used = new LinkedHashSet<>();
@@ -80,6 +79,11 @@ public class KeycapsScreen extends Screen {
         layers = new ArrayList<>(List.of(Layer.NORMAL, Layer.CTRL, Layer.ALT));
         if (used.contains(Layer.SHIFT)) layers.add(Layer.SHIFT);
         layers.add(Layer.F3);
+        // "B +", "Z +": malilib key sequences that start with an ordinary key, by that key's label
+        List<Layer> holds = new ArrayList<>();
+        for (Layer l : used) if (l.isHold()) holds.add(l);
+        holds.sort((a, b) -> Labels.keyLabel(a.holdKey).compareToIgnoreCase(Labels.keyLabel(b.holdKey)));
+        layers.addAll(holds);
         if (!layers.contains(selected)) selected = Layer.NORMAL;
 
         // window: the screen minus a margin (smaller screens: almost all of it)
@@ -206,6 +210,9 @@ public class KeycapsScreen extends Screen {
     }
 
     private Component layerLabel(Layer l) {
+        if (l.isHold()) {
+            return Component.translatable(l.translationKey, Labels.keyLabel(l.holdKey));
+        }
         if (l == Layer.F3) {
             return Component.translatable(l.translationKey, KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getDisplayName());
         }
@@ -220,6 +227,11 @@ public class KeycapsScreen extends Screen {
                 && (InputConstants.isKeyDown(InputConstants.KEY_LSHIFT) || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT))) return Layer.SHIFT;
         InputConstants.Key dbg = KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier);
         if (dbg.getType() == InputConstants.Type.KEYBOARD && InputConstants.isKeyDown(dbg.getValue())) return Layer.F3;
+        for (Layer l : layers) {
+            if (!l.isHold()) continue;
+            InputConstants.Key k = InputConstants.getKey(l.holdKey);
+            if (k.getType() == InputConstants.Type.KEYBOARD && InputConstants.isKeyDown(k.getValue())) return l;
+        }
         return selected;
     }
 
@@ -283,7 +295,8 @@ public class KeycapsScreen extends Screen {
         List<Entry> here = on(c.key(), view);
         Layer modifierLayer = Layer.ofModifier(c.key());
         boolean heldModifier = view != Layer.NORMAL && (modifierLayer == view
-                || (view == Layer.F3 && c.key().equals(KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getName())));
+                || (view == Layer.F3 && c.key().equals(KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getName()))
+                || (view.isHold() && c.key().equals(view.holdKey)));
 
         String caption = null;
         int fill, textColor = TEXT;
@@ -376,13 +389,12 @@ public class KeycapsScreen extends Screen {
     }
 
     private String shortLayer(Layer l) {
-        return switch (l) {
-            case CTRL -> "Ctrl:";
-            case ALT -> "Alt:";
-            case SHIFT -> "Shift:";
-            case F3 -> KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getDisplayName().getString() + ":";
-            default -> "";
-        };
+        if (l == Layer.CTRL) return "Ctrl:";
+        if (l == Layer.ALT) return "Alt:";
+        if (l == Layer.SHIFT) return "Shift:";
+        if (l == Layer.F3) return KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getDisplayName().getString() + ":";
+        if (l.isHold()) return Labels.keyLabel(l.holdKey) + ":";
+        return "";
     }
 
     /** One line under the keyboard for actions on keys it doesn't show (numpad, extra mouse buttons, F13+). */

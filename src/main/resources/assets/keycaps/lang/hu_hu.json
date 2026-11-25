@@ -7,6 +7,7 @@
   "keycaps.layer.alt": "Alt +",
   "keycaps.layer.shift": "Shift +",
   "keycaps.layer.f3": "%s +",
+  "keycaps.layer.hold": "%s +",
   "keycaps.button.caption": "Felirat: %s%%",
   "keycaps.button.shape": "Billentyűzet: %s",
   "keycaps.shape.auto": "Auto (%s)",
@@ -28,6 +29,8 @@
   "keycaps.group.social": "Chat, játékosok",
   "keycaps.group.graphics": "Grafika",
   "keycaps.group.tools": "Eszközök",
+  "keycaps.group.litematica": "Litematica",
+  "keycaps.group.tweakeroo": "Tweakeroo",
   "keycaps.group.creative": "Kreatív",
   "keycaps.group.other": "Egyéb",
 
