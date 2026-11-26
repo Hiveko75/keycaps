@@ -54,22 +54,23 @@ public final class Collector {
             String context = km.getCategory().id().toString() + " " + source.getString();
             String group = Groups.groupOf(id, context);
             Situations.Rule rule = Situations.ruleOf(id, context);
-            Set<String> when = Situations.of(rule, Situations.IN_WORLD);
+            Component off = offNote(rule);
+            Set<String> when = off != null ? Situations.SWITCHED_OFF : Situations.of(rule, Situations.IN_WORLD);
             if (debug.contains(km)) {
                 if (km == o.keyDebugModifier) {
                     if (!key.equals(overlay)) {
                         out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group,
-                                Component.translatable("keycaps.note.debug_modifier"), when));
+                                join(Component.translatable("keycaps.note.debug_modifier"), off), when));
                     }
                 } else if (km == o.keyDebugOverlay) {
                     Component note = key.equals(debugModifier) ? Component.translatable("keycaps.note.debug_modifier") : null;
-                    out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group, note, when));
+                    out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group, join(note, off), when));
                 } else {
-                    out.add(new Entry(Layer.F3, key.getName(), id, name, source, group, null, when));
+                    out.add(new Entry(Layer.F3, key.getName(), id, name, source, group, off, when));
                 }
                 continue;
             }
-            addWithModifiers(out, key.getName(), withAdded(mkb.modifiers(id), rule), id, name, source, group, when);
+            addWithModifiers(out, key.getName(), withAdded(mkb.modifiers(id), rule), id, name, source, group, when, off);
         }
 
         // Multi Key Bindings: extra bindings for an action, and its own toggle actions
@@ -80,8 +81,9 @@ public final class Collector {
             Component source = Component.translatable("keycaps.source.mkb");
             List<String> mods = mkb.modifiers(b.id());
             if (mods.isEmpty()) mods = mkb.modifiers(b.action());
+            Component off = offNote(rule);
             addWithModifiers(out, b.key(), withAdded(mods, rule), b.action(), b.name(), source, group,
-                    Situations.of(rule, Situations.IN_WORLD));
+                    off != null ? Situations.SWITCHED_OFF : Situations.of(rule, Situations.IN_WORLD), off);
         }
 
         Malilib.collect(out);
@@ -99,9 +101,26 @@ public final class Collector {
         return out;
     }
 
+    /**
+     * "Works only while … is on" when an option the rule needs is switched off now ({@link Needs}), else null.
+     * Such an action is {@link Situations#OFF}: shown, but never part of a conflict.
+     */
+    static Component offNote(Situations.Rule rule) {
+        List<String> off = Needs.switchedOff(rule);
+        if (off.isEmpty()) return null;
+        return Component.translatable("keycaps.note.needs", String.join(", ", off));
+    }
+
+    /** Both notes in one line ("a · b"), or the one that is there. */
+    static Component join(Component a, Component b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return Component.empty().append(a).append(" · ").append(b);
+    }
+
     /** Puts an action into the layer its modifiers stand for; other held keys become a note. */
     static void addWithModifiers(List<Entry> out, String key, List<String> modifiers, String id,
-                                 Component name, Component source, String group, Set<String> when) {
+                                 Component name, Component source, String group, Set<String> when, Component extra) {
         Layer layer = Layer.NORMAL;
         List<String> other = new ArrayList<>();
         for (String m : modifiers) {
@@ -118,7 +137,7 @@ public final class Collector {
             }
             note = Component.translatable("keycaps.note.hold", held);
         }
-        out.add(new Entry(layer, key, id, name, source, group, note, when));
+        out.add(new Entry(layer, key, id, name, source, group, join(note, extra), when));
     }
 
     static void warnOnce(String what, Throwable t) {
@@ -270,17 +289,19 @@ public final class Collector {
             String group = Groups.groupOf(id, modName);
             Component name = Component.literal(pretty);
             MALILIB_IDS.add(id);
-            Set<String> when = Situations.of(Situations.ruleOf(id, modName),
-                    anywhere ? Situations.WORLD_AND_MENU : Situations.IN_WORLD);
+            Situations.Rule rule = Situations.ruleOf(id, modName);
+            Component off = offNote(rule);
+            Set<String> when = off != null ? Situations.SWITCHED_OFF
+                    : Situations.of(rule, anywhere ? Situations.WORLD_AND_MENU : Situations.IN_WORLD);
 
             List<String> ordinary = new ArrayList<>();
             for (String h : held) if (Layer.ofModifier(h) == null) ordinary.add(h);
             if (ordinary.isEmpty()) {
-                addWithModifiers(out, main, held, id, name, source, group, when);
+                addWithModifiers(out, main, held, id, name, source, group, when, off);
             } else if (held.size() == 1) {
                 String debugKey = KeyMappingHelper.getBoundKeyOf(Minecraft.getInstance().options.keyDebugModifier).getName();
                 Layer layer = held.get(0).equals(debugKey) ? Layer.F3 : Layer.hold(held.get(0));
-                out.add(new Entry(layer, main, id, name, source, group, null, when));
+                out.add(new Entry(layer, main, id, name, source, group, off, when));
             }
         }
 

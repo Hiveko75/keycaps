@@ -22,6 +22,14 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   comes from `situations.json` (a copy in `config/keycaps/situations.json` replaces it), which can also say
   that a mod adds a modifier itself (the emoji picker is Ctrl + E, so it is shown on the Ctrl tab). OFF: every
   shared key counts, as in Minecraft's Key Binds.
+- **Switched-off features:** a key whose feature is turned off does nothing, so it is never a conflict; its
+  hover text says "switched off" and which option turns it on. Read live from the mods' settings when the
+  map opens, through the rules' `needs` in `situations.json` (`<class>#<static field>`, a malilib option or
+  a boolean field). Built in: Tweakeroo's flexible and accurate placement, hotbar swap and scroll,
+  inventory preview, inventory peek, Y mirror and elytra camera keys (each needs its tweak); MiniHUD's
+  inventory preview keys (Inventory Preview enabled); Litematica's Easy Place key (Easy Place mode), its
+  pick block keys (pick block on, schematic rendering on) and its tool item keys and modifiers (tool item
+  enabled; they only work while holding the tool item, so they don't clash with ordinary keys either).
 - **Right-click a key** with more than one action: a list of its pairs, where you tick the pairs that are
   fine. The key stays a conflict while an unticked pair is left; a tick stops counting once one of the two
   actions moves to another key. Stored as `notConflicts` in `config/keycaps.json`.

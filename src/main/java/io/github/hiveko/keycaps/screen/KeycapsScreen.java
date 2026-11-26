@@ -710,7 +710,10 @@ public class KeycapsScreen extends Screen {
 
         private String rowText(Pair p) {
             String text = p.a().name().getString() + "  ↔  " + p.b().name().getString();
-            if (!p.together()) text += "  (" + Component.translatable("keycaps.pairs.apart").getString() + ")";
+            if (!p.together()) {
+                boolean off = p.a().when().contains(Situations.OFF) || p.b().when().contains(Situations.OFF);
+                text += "  (" + Component.translatable(off ? "keycaps.pairs.off" : "keycaps.pairs.apart").getString() + ")";
+            }
             return text;
         }
 

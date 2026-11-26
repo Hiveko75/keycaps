@@ -34,15 +34,23 @@ import java.util.regex.Pattern;
  *   <li>any other word is a situation of its own (for example {@code replay} for Flashback's editor).</li>
  * </ul>
  * A rule can also say the mod adds a modifier itself ({@code "adds": "ctrl"}: the emoji picker is Ctrl + E
- * although its binding says E), so the action is shown on that layer.
+ * although its binding says E), so the action is shown on that layer, and which options the action needs
+ * ({@code "needs"}: Tweakeroo's flexible placement keys do nothing while Flexible Block Placement is off).
+ * While one of those is off the action is {@link #OFF} and never a clash ({@link Needs}).
  */
 public final class Situations {
     public static final String WORLD = "world", MENU = "menu", CHAT = "chat", PASSIVE = "passive";
+    /** The action needs an option that is switched off now, so it does nothing (from a rule's "needs"). */
+    public static final String OFF = "off";
     public static final Set<String> IN_WORLD = Set.of(WORLD);
     public static final Set<String> WORLD_AND_MENU = Set.of(WORLD, MENU);
+    public static final Set<String> SWITCHED_OFF = Set.of(OFF);
 
-    /** What a rule says about the matching actions: their situations (null = keep), a modifier the mod adds. */
-    public record Rule(Pattern pattern, Set<String> when, String adds) {}
+    /**
+     * What a rule says about the matching actions: their situations (null = keep), a modifier the mod adds,
+     * and the options they need ({@code <class>#<static field>}, empty = none).
+     */
+    public record Rule(Pattern pattern, Set<String> when, String adds, List<String> needs) {}
 
     private static final List<Rule> RULES = new ArrayList<>();
 
@@ -85,7 +93,13 @@ public final class Situations {
                     when = Collections.unmodifiableSet(when);
                 }
                 String adds = o.has("adds") ? o.get("adds").getAsString().toLowerCase(Locale.ROOT) : null;
-                RULES.add(new Rule(Pattern.compile(o.get("match").getAsString()), when, adds));
+                List<String> needs = new ArrayList<>();
+                if (o.has("needs")) {
+                    JsonElement n = o.get("needs");
+                    if (n.isJsonArray()) for (JsonElement x : n.getAsJsonArray()) needs.add(x.getAsString());
+                    else needs.add(n.getAsString());
+                }
+                RULES.add(new Rule(Pattern.compile(o.get("match").getAsString()), when, adds, List.copyOf(needs)));
             } catch (Exception e) {
                 Keycaps.LOGGER.warn("Skipping a situation rule that is not valid: {}", r, e);
             }
@@ -115,9 +129,12 @@ public final class Situations {
         };
     }
 
-    /** True when the two actions can fire at the same time (they share a situation; passive never clashes). */
+    /**
+     * True when the two actions can fire at the same time (they share a situation; passive and switched-off
+     * actions never clash).
+     */
     public static boolean overlap(Set<String> a, Set<String> b) {
-        if (a.contains(PASSIVE) || b.contains(PASSIVE)) return false;
+        if (a.contains(PASSIVE) || b.contains(PASSIVE) || a.contains(OFF) || b.contains(OFF)) return false;
         for (String s : a) if (b.contains(s)) return true;
         return false;
     }

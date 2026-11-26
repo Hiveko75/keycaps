@@ -27,6 +27,14 @@ First version, Minecraft 26.3 (the other versions follow).
   in menus; ClientSort, Locked In Slots and OptiGUI's inspect key only in menus; Jade's details key only
   changes what is shown; Flashback's timeline keys only in its editor) and that the emoji picker is really
   Ctrl + E (shown on the Ctrl tab). The hover text says when an action works if it is not just in the world.
+- **Switched-off features don't count as conflicts:** Tweakeroo's flexible and accurate placement, hotbar
+  swap and scroll, inventory preview, inventory peek, Y mirror and elytra camera keys only work while their
+  tweak is on; MiniHUD's inventory preview keys while Inventory Preview is enabled; Litematica's Easy Place
+  key in Easy Place mode, its pick block keys while pick block and schematic rendering are on, and its tool
+  item keys and modifiers while the tool item is enabled (and only while holding it, so they don't clash
+  with ordinary keys either). Read live when the map opens; the hover text says "switched off" and which
+  option turns the key on, and the right-click list says "one of them is switched off". Other mods can be
+  added with `needs` in `situations.json`.
 - **Right-click a key** with more than one action to tick the pairs that are not conflicts; the key stays a
   conflict while an unticked pair is left. Saved in `config/keycaps.json` (`notConflicts`).
   Keys the drawing doesn't have (extra mouse buttons, F13 and up) are listed under the keyboard.
