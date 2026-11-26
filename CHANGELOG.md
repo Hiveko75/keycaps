@@ -36,6 +36,11 @@ First version, Minecraft 26.3 (the other versions follow).
   with ordinary keys either). Read live when the map opens; the hover text says "switched off" and which
   option turns the key on, and the right-click list says "one of them is switched off". Other mods can be
   added with `needs` in `situations.json`.
+  Every Tweakeroo, MiniHUD and Litematica hotkey was checked in the mods' code (list and reasons in
+  `docs/masa-hotkeys.md`): also Tweakeroo's spyglass key (Spyglass Uses Tweak Zoom) and area selection offset
+  (Area Selector), Litematica's version cycle modifier (tool item), and keys that only change what is shown
+  while held (MiniHUD's required key; Litematica's render-through-blocks, invert rendering and info overlay
+  keys).
 - **Icon:** the keyboard from Microsoft's Fluent Emoji (MIT License, notice in the jar).
 - **F3 is not a conflict:** the debug screen key and the debug modifier (both F3) are one entry again, as
   meant ("Hold it for the debug combinations"); Minecraft keeps them outside its list of debug combinations,

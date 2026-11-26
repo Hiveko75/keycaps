@@ -31,6 +31,8 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   inventory preview keys (Inventory Preview enabled); Litematica's Easy Place key (Easy Place mode), its
   pick block keys (pick block on, schematic rendering on) and its tool item keys and modifiers (tool item
   enabled; they only work while holding the tool item, so they don't clash with ordinary keys either).
+  Every masa hotkey was checked in the mods' code; `docs/masa-hotkeys.md` lists the result and how to check a
+  new mod version with `tools/masa_gates.py`.
 - **Made to share a key:** a rule's `shares` lists the actions an action is made to share its key with; such a
   pair is never a conflict. Built in: Litematica's schematic pick block keys and Minecraft's Pick Block
   (Litematica only acts when a schematic block is aimed at).
