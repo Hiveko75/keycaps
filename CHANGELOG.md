@@ -36,6 +36,8 @@ First version, Minecraft 26.3 (the other versions follow).
   with ordinary keys either). Read live when the map opens; the hover text says "switched off" and which
   option turns the key on, and the right-click list says "one of them is switched off". Other mods can be
   added with `needs` in `situations.json`.
+- **Multi Key Bindings' extra bindings** are named after their action (a second Auto-Jump Toggle binding on
+  the middle mouse button showed as "Middle Button", the name of its key).
 - **Right-click a key** with more than one action to tick the pairs that are not conflicts; the key stays a
   conflict while an unticked pair is left. Saved in `config/keycaps.json` (`notConflicts`).
   Keys the drawing doesn't have (extra mouse buttons, F13 and up) are listed under the keyboard.

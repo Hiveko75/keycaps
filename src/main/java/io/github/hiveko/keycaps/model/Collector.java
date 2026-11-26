@@ -152,7 +152,7 @@ public final class Collector {
 
         private static Mkb instance;
         private final boolean present;
-        private Method getAllModifiers, getKeyBindings, getId, getAction, getKey, getDisplayName, getCategory, isUnbound;
+        private Method getAllModifiers, getKeyBindings, getId, getAction, getKey, getTranslationKey, getCategory, isUnbound;
 
         static Mkb get() {
             if (instance == null) instance = new Mkb();
@@ -171,7 +171,11 @@ public final class Collector {
                     getId = mkb.getMethod("getId");
                     getAction = mkb.getMethod("getAction");
                     getKey = mkb.getMethod("getKey");
-                    getDisplayName = mkb.getMethod("getDisplayName");
+                    try {
+                        getTranslationKey = mkb.getMethod("getTranslationKey");
+                    } catch (NoSuchMethodException e) {
+                        getTranslationKey = null; // older Multi Key Bindings: worked out from the action below
+                    }
                     getCategory = mkb.getMethod("getCategory");
                     isUnbound = mkb.getMethod("isUnbound");
                     ok = true;
@@ -197,6 +201,21 @@ public final class Collector {
             }
         }
 
+        /**
+         * The action's name key. Multi Key Bindings' getDisplayName() is the bound key's name ("Middle Button"),
+         * so the name comes from getTranslationKey(): its own toggles keep their id ("multi.toggle.options.autoJump"
+         * = Auto-Jump Toggle), extra bindings of a key binding drop the "multi." prefix ("key.crawl").
+         */
+        private String translationKey(Object binding, String action) {
+            try {
+                if (getTranslationKey != null && getTranslationKey.invoke(binding) instanceof String k && !k.isEmpty()) return k;
+            } catch (Throwable t) {
+                warnOnce("a Multi Key Bindings action name", t);
+            }
+            if (action.startsWith("multi.toggle.")) return action;
+            return action.startsWith("multi.") ? action.substring("multi.".length()) : action;
+        }
+
         List<Extra> extras() {
             if (!present) return List.of();
             List<Extra> out = new ArrayList<>();
@@ -206,8 +225,9 @@ public final class Collector {
                     InputConstants.Key key = (InputConstants.Key) getKey.invoke(b);
                     Object cat = getCategory.invoke(b);
                     String category = cat instanceof KeyMapping.Category c ? c.id().toString() : "";
-                    out.add(new Extra(String.valueOf(getId.invoke(b)), (String) getAction.invoke(b), key.getName(),
-                            (Component) getDisplayName.invoke(b), category));
+                    String action = (String) getAction.invoke(b);
+                    out.add(new Extra(String.valueOf(getId.invoke(b)), action, key.getName(),
+                            Component.translatable(translationKey(b, action)), category));
                 }
             } catch (Throwable t) {
                 warnOnce("Multi Key Bindings bindings", t);
