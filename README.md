@@ -18,7 +18,8 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   keys whose actions clash.
 - **Smart conflict check** (button "Smart: ON/OFF", on by default): a shared key only counts as a conflict
   when both actions can work at the same time: in the world, in menus, in chat (the inventory key on E and
-  a sort key used only in the inventory don't clash). malilib says this for its hotkeys; for the others it
+  a sort key used only in the inventory don't clash; Debug Crash only works when F3 + C is held for 10
+  seconds, so it doesn't clash with Copy Location). malilib says this for its hotkeys; for the others it
   comes from `situations.json` (a copy in `config/keycaps/situations.json` replaces it), which can also say
   that a mod adds a modifier itself (the emoji picker is Ctrl + E, so it is shown on the Ctrl tab). OFF: every
   shared key counts, as in Minecraft's Key Binds.

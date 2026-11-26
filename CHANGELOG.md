@@ -25,7 +25,8 @@ First version, Minecraft 26.3 (the other versions follow).
   actions can work at the same time (in the world, in menus, in chat). malilib hotkeys say this
   themselves; `situations.json` says it for the rest (inventory, hotbar, drop and offhand keys also work
   in menus; ClientSort, Locked In Slots and OptiGUI's inspect key only in menus; Jade's details key only
-  changes what is shown; Flashback's timeline keys only in its editor) and that the emoji picker is really
+  changes what is shown; Flashback's timeline keys only in its editor; Minecraft's Debug Crash only when
+  F3 + C is held for 10 seconds, so it doesn't clash with Copy Location) and that the emoji picker is really
   Ctrl + E (shown on the Ctrl tab). The hover text says when an action works if it is not just in the world.
 - **Switched-off features don't count as conflicts:** Tweakeroo's flexible and accurate placement, hotbar
   swap and scroll, inventory preview, inventory peek, Y mirror and elytra camera keys only work while their

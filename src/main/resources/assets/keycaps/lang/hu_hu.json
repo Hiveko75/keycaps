@@ -33,6 +33,7 @@
   "keycaps.when.replay": "a felvételszerkesztőben",
   "keycaps.when.off": "kikapcsolva",
   "keycaps.when.litematica_tool": "a Litematica eszközét tartva",
+  "keycaps.when.hold_10s": "csak 10 másodpercig lenyomva tartva (szándékosan összeomlasztja a játékot)",
   "keycaps.tooltip.legend": "Kattintás: csak ezek a billentyűk",
   "keycaps.tooltip.legend.off": "Újra kattintva: az összes billentyű",
   "keycaps.tooltip.layer.off": "Újra kattintva: módosító nélküli billentyűk",

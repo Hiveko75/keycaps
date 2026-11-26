@@ -33,6 +33,7 @@
   "keycaps.when.replay": "in the replay editor",
   "keycaps.when.off": "switched off",
   "keycaps.when.litematica_tool": "while holding Litematica's tool item",
+  "keycaps.when.hold_10s": "only when held for 10 seconds (crashes the game on purpose)",
   "keycaps.tooltip.legend": "Click: show only these keys",
   "keycaps.tooltip.legend.off": "Click again: show all keys",
   "keycaps.tooltip.layer.off": "Click again: keys without a modifier",
