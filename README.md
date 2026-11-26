@@ -33,6 +33,10 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   enabled; they only work while holding the tool item, so they don't clash with ordinary keys either).
   Every masa hotkey was checked in the mods' code; `docs/masa-hotkeys.md` lists the result and how to check a
   new mod version with `tools/masa_gates.py`.
+- **Fixed keys:** keys mods read directly instead of registering them (`fixed` in `situations.json`: a fixed
+  `key`, or `with` another action's key plus a modifier; `when`, `needs`, `shares` as in the rules) are shown with
+  a "Fixed in …" note and checked for conflicts. Built in: Minecraft's Ctrl + Drop (whole stack) and Ctrl + Pick
+  Block (with data), Scroll Walk, HeyWiki, Xaero's World Map and Language Reload.
 - **Made to share a key:** a rule's `shares` lists the actions an action is made to share its key with; such a
   pair is never a conflict. Built in: Litematica's schematic pick block keys and Minecraft's Pick Block
   (Litematica only acts when a schematic block is aimed at).

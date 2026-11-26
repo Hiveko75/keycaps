@@ -42,6 +42,13 @@
   "keycaps.tooltip.click": "Click: change key bindings",
   "keycaps.note.debug_modifier": "Hold it for the debug combinations (the F3 + tab)",
   "keycaps.note.hold": "Hold %s too",
+  "keycaps.note.fixed": "Fixed in %s (not in Key Binds)",
+  "keycaps.fixed.drop_stack": "Drop whole stack",
+  "keycaps.fixed.pick_with_data": "Pick Block with its data (creative)",
+  "keycaps.fixed.scrollwalk_speed": "Walking speed (hold, then mouse wheel)",
+  "keycaps.fixed.heywiki_held_item": "Wiki page of the item in hand",
+  "keycaps.fixed.xaero_dimension_back": "Toggle dimension backwards",
+  "keycaps.fixed.cycle_languages": "Cycle languages",
   "keycaps.note.needs": "Works only while %s is on",
   "keycaps.source.mkb": "Multi Key Bindings",
 

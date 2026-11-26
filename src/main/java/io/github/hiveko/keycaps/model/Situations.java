@@ -54,6 +54,26 @@ public final class Situations {
     public record Rule(Pattern pattern, Set<String> when, String adds, List<String> needs, List<String> shares) {}
 
     private static final List<Rule> RULES = new ArrayList<>();
+    private static final List<Fixed> FIXED = new ArrayList<>();
+
+    /**
+     * A key a mod reads directly instead of registering it ("fixed": Scroll Walk's Alt + mouse wheel, Minecraft's
+     * Ctrl + Drop for the whole stack). Either a fixed {@code key} or {@code with} another action's key (with the
+     * rule's {@code adds} modifier on top); shown with a "fixed in …" note and part of the conflict check.
+     *
+     * @param id       the action id ({@code <mod>:<name>})
+     * @param mod      the mod id that must be loaded ({@code minecraft} for the game itself)
+     * @param name     translation key of its name, {@code fallback} when the language has none
+     * @param keys     Minecraft key names ({@code key.keyboard.left.alt}), or empty when {@code with} is used
+     * @param with     the key binding whose key it uses, or null
+     * @param rule     its situations, modifier, needs and shares (pattern unused)
+     */
+    public record Fixed(String id, String mod, String name, String fallback, List<String> keys, String with, Rule rule) {}
+
+    /** The fixed keys from the last {@link #load()}. */
+    public static List<Fixed> fixed() {
+        return FIXED;
+    }
 
     private Situations() {}
 
@@ -64,6 +84,7 @@ public final class Situations {
     /** (Re)reads the rules; called every time the screen opens. */
     public static void load() {
         RULES.clear();
+        FIXED.clear();
         JsonObject root = null;
         Path f = file();
         if (Files.exists(f)) {
@@ -80,26 +101,45 @@ public final class Situations {
                 Keycaps.LOGGER.error("Could not read the built-in situations", e);
             }
         }
-        if (root == null || !root.has("rules")) return;
+        if (root == null) return;
+        if (root.has("fixed")) {
+            for (JsonElement r : root.getAsJsonArray("fixed")) {
+                try {
+                    JsonObject o = r.getAsJsonObject();
+                    Rule rule = new Rule(Pattern.compile("$^"), whenOf(o), addsOf(o), strings(o, "needs"), strings(o, "shares"));
+                    FIXED.add(new Fixed(o.get("id").getAsString(), o.has("mod") ? o.get("mod").getAsString() : "minecraft",
+                            o.has("name") ? o.get("name").getAsString() : o.get("id").getAsString(),
+                            o.has("fallback") ? o.get("fallback").getAsString() : o.get("id").getAsString(),
+                            strings(o, "key"), o.has("with") ? o.get("with").getAsString() : null, rule));
+                } catch (Exception e) {
+                    Keycaps.LOGGER.warn("Skipping a fixed key that is not valid: {}", r, e);
+                }
+            }
+        }
+        if (!root.has("rules")) return;
         for (JsonElement r : root.getAsJsonArray("rules")) {
             try {
                 JsonObject o = r.getAsJsonObject();
-                Set<String> when = null;
-                if (o.has("when")) {
-                    when = new LinkedHashSet<>();
-                    JsonElement w = o.get("when");
-                    JsonArray list = w.isJsonArray() ? w.getAsJsonArray() : new JsonArray();
-                    if (!w.isJsonArray()) list.add(w);
-                    for (JsonElement s : list) when.add(s.getAsString().toLowerCase(Locale.ROOT));
-                    when = Collections.unmodifiableSet(when);
-                }
-                String adds = o.has("adds") ? o.get("adds").getAsString().toLowerCase(Locale.ROOT) : null;
-                RULES.add(new Rule(Pattern.compile(o.get("match").getAsString()), when, adds,
+                RULES.add(new Rule(Pattern.compile(o.get("match").getAsString()), whenOf(o), addsOf(o),
                         strings(o, "needs"), strings(o, "shares")));
             } catch (Exception e) {
                 Keycaps.LOGGER.warn("Skipping a situation rule that is not valid: {}", r, e);
             }
         }
+    }
+
+    private static Set<String> whenOf(JsonObject o) {
+        if (!o.has("when")) return null;
+        Set<String> when = new LinkedHashSet<>();
+        JsonElement w = o.get("when");
+        JsonArray list = w.isJsonArray() ? w.getAsJsonArray() : new JsonArray();
+        if (!w.isJsonArray()) list.add(w);
+        for (JsonElement s : list) when.add(s.getAsString().toLowerCase(Locale.ROOT));
+        return Collections.unmodifiableSet(when);
+    }
+
+    private static String addsOf(JsonObject o) {
+        return o.has("adds") ? o.get("adds").getAsString().toLowerCase(Locale.ROOT) : null;
     }
 
     /** A rule field that is one string or a list of strings. */

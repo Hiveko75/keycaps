@@ -110,7 +110,46 @@ public final class Collector {
         }
 
         Malilib.collect(out);
+        addFixed(out, o, mkb, debug);
         return out;
+    }
+
+    /**
+     * Keys mods read directly instead of registering them ({@link Situations#fixed()}): a fixed key (Scroll Walk's
+     * Alt) or a modifier on another action's key (Minecraft's Ctrl + Drop drops the whole stack). Shown with a
+     * "fixed in …" note and checked for conflicts like the rest.
+     */
+    private static void addFixed(List<Entry> out, Options o, Mkb mkb, Set<KeyMapping> debug) {
+        for (Situations.Fixed f : Situations.fixed()) {
+            if (!"minecraft".equals(f.mod()) && !FabricLoader.getInstance().isModLoaded(f.mod())) continue;
+            Situations.Rule rule = f.rule();
+            Component name = Component.translatableWithFallback(f.name(), f.fallback());
+            Component source = Component.literal(ModScreens.modName(f.mod()));
+            Component off = offNote(rule);
+            Component note = join(Component.translatable("keycaps.note.fixed", source), off);
+            Set<String> when = off != null ? Situations.SWITCHED_OFF : Situations.of(rule, Situations.IN_WORLD);
+            String group = Groups.groupOf(f.id(), f.mod());
+            rememberShares(f.id(), rule);
+            if (f.with() == null) {
+                for (String key : f.keys()) {
+                    addWithModifiers(out, key, withAdded(List.of(), rule), f.id(), name, source, group, when, note);
+                }
+                continue;
+            }
+            KeyMapping base = null;
+            for (KeyMapping km : o.keyMappings) if (km.getName().equals(f.with())) base = km;
+            if (base == null || base.isUnbound()) continue;
+            String key = KeyMappingHelper.getBoundKeyOf(base).getName();
+            if (debug.contains(base)) {
+                // an F3 combination with one more key held (Language Reload: F3 + Shift + J)
+                String added = Situations.addedModifier(rule);
+                Component held = added == null ? null
+                        : Component.translatable("keycaps.note.hold", InputConstants.getKey(added).getDisplayName());
+                out.add(new Entry(Layer.F3, key, f.id(), name, source, group, join(held, note), when));
+            } else {
+                addWithModifiers(out, key, withAdded(mkb.modifiers(f.with()), rule), f.id(), name, source, group, when, note);
+            }
+        }
     }
 
     /** The modifiers plus the one a situation rule says the mod adds itself (the emoji picker's Ctrl). */

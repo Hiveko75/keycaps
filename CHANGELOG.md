@@ -43,6 +43,12 @@ First version, Minecraft 26.3 (the other versions follow).
   keys). Litematica's block-pick modifiers (used with a click) and its scroll-wheel modifiers share keys by
   design (both on Left Alt by default), and its Easy Place key works through Minecraft's Use key.
 - **Icon:** the keyboard from Microsoft's Fluent Emoji (MIT License, notice in the jar).
+- **Fixed keys:** keys that mods read directly instead of registering them are shown on the map ("Fixed in
+  …", not in Key Binds) and checked for conflicts: Minecraft's Ctrl + Drop (drops the whole stack, so a Drop
+  binding that itself needs Ctrl always drops the whole stack) and Ctrl + Pick Block (with the block's data,
+  creative), Scroll Walk's Alt + mouse wheel (while it is enabled), HeyWiki's Alt + Open Wiki (the held item),
+  Xaero's World Map's Shift + Toggle Dimension (backwards) and Language Reload's F3 + Shift + J (cycle
+  languages). Found by scanning every mod of the 26.3 pack; listed under `fixed` in `situations.json`.
 - **F3 is not a conflict:** the debug screen key and the debug modifier (both F3) are one entry again, as
   meant ("Hold it for the debug combinations"); Minecraft keeps them outside its list of debug combinations,
   so both were shown on F3 as a clash.

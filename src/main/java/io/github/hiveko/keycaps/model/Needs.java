@@ -21,7 +21,8 @@ import java.util.Set;
  *
  * <p>An option is named {@code <class>#<static field>}: a malilib option (anything with
  * {@code IConfigBoolean.getBooleanValue()}, such as a Tweakeroo tweak or a {@code ConfigBoolean}) or a plain
- * {@code boolean} field. Classes are found by name, so the mods stay optional; an option that can't be read
+ * {@code boolean} field, also inside the object in a static field ({@code ScrollWalk#config.modEnabled}).
+ * Classes are found by name, so the mods stay optional; an option that can't be read
  * counts as on, so the action is treated as before.
  */
 public final class Needs {
@@ -52,16 +53,20 @@ public final class Needs {
             return Optional.empty();
         }
         String className = ref.substring(0, hash);
+        String[] path = ref.substring(hash + 1).split("\\.");
         try {
             Class<?> c = Class.forName(className, true, Needs.class.getClassLoader());
-            Field f = c.getField(ref.substring(hash + 1));
+            Field f = field(c, path[0]);
             if (!Modifier.isStatic(f.getModifiers())) {
                 warnOnce(ref, "is not a static field", null);
                 return Optional.empty();
             }
-            if (f.getType() == boolean.class) return Optional.of(f); // read each time
-            Object value = f.get(null);
-            return Optional.ofNullable(value);
+            if (path.length == 1) {
+                if (f.getType() == boolean.class) return Optional.of(new Path(null, f)); // read each time
+                return Optional.ofNullable(f.get(null));
+            }
+            // a field of the object in a static field (Scroll Walk: ScrollWalk.config.modEnabled), read each time
+            return Optional.of(new Path(f, null, java.util.Arrays.copyOfRange(path, 1, path.length)));
         } catch (ClassNotFoundException e) {
             return Optional.empty(); // the mod is not installed
         } catch (Throwable t) {
@@ -70,10 +75,41 @@ public final class Needs {
         }
     }
 
+    /** A static field, optionally followed by fields of the object in it ({@code config.modEnabled}). */
+    private record Path(Field root, Field plain, String... rest) {
+        Path(Field root, Field plain) {
+            this(root, plain, new String[0]);
+        }
+
+        Object read() throws ReflectiveOperationException {
+            if (plain != null) return plain.getBoolean(null);
+            Object o = root.get(null);
+            for (String name : rest) {
+                if (o == null) return null;
+                o = field(o.getClass(), name).get(o);
+            }
+            return o;
+        }
+    }
+
+    private static Field field(Class<?> c, String name) throws NoSuchFieldException {
+        for (Class<?> k = c; k != null; k = k.getSuperclass()) {
+            try {
+                Field f = k.getDeclaredField(name);
+                f.setAccessible(true);
+                return f;
+            } catch (NoSuchFieldException ignored) {
+                // look in the superclass
+            }
+        }
+        throw new NoSuchFieldException(name);
+    }
+
     /** True / false for the option, null when it can't be read. */
     private static Boolean value(String ref, Object option) {
         try {
-            if (option instanceof Field f) return f.getBoolean(null);
+            if (option instanceof Path p) option = p.read();
+            if (option == null) return null;
             if (option instanceof Boolean b) return b;
             Method m = malilib(true);
             if (m != null && m.getDeclaringClass().isInstance(option)) return (Boolean) m.invoke(option);
@@ -95,7 +131,11 @@ public final class Needs {
         } catch (Throwable ignored) {
             // fall back to the field name
         }
-        return ref.substring(ref.indexOf('#') + 1);
+        String field = ref.substring(ref.lastIndexOf('.') > ref.indexOf('#') ? ref.lastIndexOf('.') + 1 : ref.indexOf('#') + 1);
+        if (field.equals(field.toUpperCase(java.util.Locale.ROOT))) return field; // CONSTANT_NAME
+        // modEnabled -> "Mod enabled"
+        String words = field.replaceAll("([a-z0-9])([A-Z])", "$1 $2").toLowerCase(java.util.Locale.ROOT);
+        return words.isEmpty() ? field : Character.toUpperCase(words.charAt(0)) + words.substring(1);
     }
 
     /** malilib's IConfigBoolean.getBooleanValue (value = true) or IConfigBase.getPrettyName, or null. */

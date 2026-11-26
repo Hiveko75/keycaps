@@ -42,6 +42,13 @@
   "keycaps.tooltip.click": "Kattintás: billentyűk beállítása",
   "keycaps.note.debug_modifier": "Lenyomva tartva: hibakeresési kombinációk (F3 + fül)",
   "keycaps.note.hold": "Ezzel együtt: %s",
+  "keycaps.note.fixed": "Rögzítve: %s (a Billentyűk között nem állítható)",
+  "keycaps.fixed.drop_stack": "Teljes köteg eldobása",
+  "keycaps.fixed.pick_with_data": "Blokk kiválasztása adatokkal (kreatív)",
+  "keycaps.fixed.scrollwalk_speed": "Járási sebesség (lenyomva tartva, majd egérgörgő)",
+  "keycaps.fixed.heywiki_held_item": "A kézben tartott tárgy wikioldala",
+  "keycaps.fixed.xaero_dimension_back": "Dimenzióváltás visszafelé",
+  "keycaps.fixed.cycle_languages": "Nyelvek váltogatása",
   "keycaps.note.needs": "Csak akkor működik, ha be van kapcsolva: %s",
   "keycaps.source.mkb": "Multi Key Bindings",
 
