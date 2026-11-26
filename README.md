@@ -63,4 +63,6 @@ version's `CHANGELOG.md` section as notes. Locally (Java 25 and 21):
 ./gradlew -p mc1.21.1 build      # -> mc1.21.1/build/libs
 ```
 
-Client-side only. License: All rights reserved.
+Client-side only. License: All rights reserved. The icon is "Keyboard" from Microsoft's
+[Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT License; the notice is in the jar as
+`assets/keycaps/icon-LICENSE.txt`).

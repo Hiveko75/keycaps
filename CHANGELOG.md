@@ -36,6 +36,7 @@ First version, Minecraft 26.3 (the other versions follow).
   with ordinary keys either). Read live when the map opens; the hover text says "switched off" and which
   option turns the key on, and the right-click list says "one of them is switched off". Other mods can be
   added with `needs` in `situations.json`.
+- **Icon:** the keyboard from Microsoft's Fluent Emoji (MIT License, notice in the jar).
 - **F3 is not a conflict:** the debug screen key and the debug modifier (both F3) are one entry again, as
   meant ("Hold it for the debug combinations"); Minecraft keeps them outside its list of debug combinations,
   so both were shown on F3 as a clash.
