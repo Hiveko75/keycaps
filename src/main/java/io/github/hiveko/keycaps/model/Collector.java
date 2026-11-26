@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,24 @@ public final class Collector {
     /** Ids of the malilib hotkeys found by the last {@link #collect()}. */
     private static final Set<String> MALILIB_IDS = new HashSet<>();
 
+    /** The actions each action is made to share its key with (a situation rule's "shares"), from the last collect. */
+    private static final Map<String, Set<String>> SHARES = new HashMap<>();
+
+    /**
+     * True when one of the two actions is made to share its key with the other, so they never count as a
+     * conflict: Litematica's schematic pick block keys only act on schematic blocks and leave the key to
+     * Minecraft's Pick Block otherwise.
+     */
+    public static boolean madeToShare(Entry a, Entry b) {
+        Set<String> sa = SHARES.get(a.id()), sb = SHARES.get(b.id());
+        return (sa != null && sa.contains(b.id())) || (sb != null && sb.contains(a.id()));
+    }
+
+    static void rememberShares(String id, Situations.Rule rule) {
+        if (rule == null || rule.shares().isEmpty()) return;
+        SHARES.computeIfAbsent(id, k -> new HashSet<>()).addAll(rule.shares());
+    }
+
     public static boolean isMalilib(Entry e) {
         return MALILIB_IDS.contains(e.id());
     }
@@ -37,6 +56,7 @@ public final class Collector {
     public static List<Entry> collect() {
         List<Entry> out = new ArrayList<>();
         MALILIB_IDS.clear();
+        SHARES.clear();
         Minecraft mc = Minecraft.getInstance();
         Options o = mc.options;
         Mkb mkb = Mkb.get();
@@ -56,7 +76,9 @@ public final class Collector {
             Situations.Rule rule = Situations.ruleOf(id, context);
             Component off = offNote(rule);
             Set<String> when = off != null ? Situations.SWITCHED_OFF : Situations.of(rule, Situations.IN_WORLD);
-            if (debug.contains(km)) {
+            rememberShares(id, rule);
+            // the overlay (F3) and the debug modifier are not in Options.debugKeys, only the F3 + … combinations
+            if (debug.contains(km) || km == o.keyDebugModifier || km == o.keyDebugOverlay) {
                 if (km == o.keyDebugModifier) {
                     if (!key.equals(overlay)) {
                         out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group,
@@ -78,6 +100,7 @@ public final class Collector {
             String base = b.action().startsWith("multi.") ? b.action().substring("multi.".length()) : b.action();
             String group = Groups.groupOf(b.action(), base + " " + b.category());
             Situations.Rule rule = Situations.ruleOf(base, b.category());
+            rememberShares(b.action(), rule);
             Component source = Component.translatable("keycaps.source.mkb");
             List<String> mods = mkb.modifiers(b.id());
             if (mods.isEmpty()) mods = mkb.modifiers(b.action());
@@ -310,6 +333,7 @@ public final class Collector {
             Component name = Component.literal(pretty);
             MALILIB_IDS.add(id);
             Situations.Rule rule = Situations.ruleOf(id, modName);
+            rememberShares(id, rule);
             Component off = offNote(rule);
             Set<String> when = off != null ? Situations.SWITCHED_OFF
                     : Situations.of(rule, anywhere ? Situations.WORLD_AND_MENU : Situations.IN_WORLD);

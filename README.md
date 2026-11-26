@@ -31,6 +31,9 @@ Press **Home** (changeable in Key Binds) in game, on the title screen or on the 
   inventory preview keys (Inventory Preview enabled); Litematica's Easy Place key (Easy Place mode), its
   pick block keys (pick block on, schematic rendering on) and its tool item keys and modifiers (tool item
   enabled; they only work while holding the tool item, so they don't clash with ordinary keys either).
+- **Made to share a key:** a rule's `shares` lists the actions an action is made to share its key with; such a
+  pair is never a conflict. Built in: Litematica's schematic pick block keys and Minecraft's Pick Block
+  (Litematica only acts when a schematic block is aimed at).
 - **Right-click a key** with more than one action: a list of its pairs, where you tick the pairs that are
   fine. The key stays a conflict while an unticked pair is left; a tick stops counting once one of the two
   actions moves to another key. Stored as `notConflicts` in `config/keycaps.json`.

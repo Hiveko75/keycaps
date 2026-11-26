@@ -26,6 +26,7 @@
   "keycaps.pairs.apart": "never at the same time",
   "keycaps.pairs.marked": "not a conflict (marked)",
   "keycaps.pairs.off": "one of them is switched off",
+  "keycaps.pairs.shared": "made to share this key",
   "keycaps.when.world": "in the world",
   "keycaps.when.menu": "in menus",
   "keycaps.when.chat": "in chat",

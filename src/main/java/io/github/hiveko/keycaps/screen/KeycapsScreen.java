@@ -449,7 +449,8 @@ public class KeycapsScreen extends Screen {
             for (int j = i + 1; j < list.size(); j++) {
                 Entry a = list.get(i), b = list.get(j);
                 String stored = KeycapsConfig.pair(layer.id, key, a.id(), b.id());
-                out.add(new Pair(a, b, !smart || Situations.overlap(a.when(), b.when()), KeycapsConfig.notConflict(stored), stored));
+                boolean together = !smart || (Situations.overlap(a.when(), b.when()) && !Collector.madeToShare(a, b));
+                out.add(new Pair(a, b, together, KeycapsConfig.notConflict(stored), stored));
             }
         }
         return out;
@@ -712,7 +713,8 @@ public class KeycapsScreen extends Screen {
             String text = p.a().name().getString() + "  ↔  " + p.b().name().getString();
             if (!p.together()) {
                 boolean off = p.a().when().contains(Situations.OFF) || p.b().when().contains(Situations.OFF);
-                text += "  (" + Component.translatable(off ? "keycaps.pairs.off" : "keycaps.pairs.apart").getString() + ")";
+                String why = off ? "keycaps.pairs.off" : Collector.madeToShare(p.a(), p.b()) ? "keycaps.pairs.shared" : "keycaps.pairs.apart";
+                text += "  (" + Component.translatable(why).getString() + ")";
             }
             return text;
         }

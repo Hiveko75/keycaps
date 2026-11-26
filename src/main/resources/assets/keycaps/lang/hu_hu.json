@@ -26,6 +26,7 @@
   "keycaps.pairs.apart": "sosem egyszerre",
   "keycaps.pairs.marked": "nem ütközés (megjelölve)",
   "keycaps.pairs.off": "az egyik ki van kapcsolva",
+  "keycaps.pairs.shared": "szándékosan közös billentyű",
   "keycaps.when.world": "játék közben",
   "keycaps.when.menu": "menükben",
   "keycaps.when.chat": "a chatben",

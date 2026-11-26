@@ -36,6 +36,13 @@ First version, Minecraft 26.3 (the other versions follow).
   with ordinary keys either). Read live when the map opens; the hover text says "switched off" and which
   option turns the key on, and the right-click list says "one of them is switched off". Other mods can be
   added with `needs` in `situations.json`.
+- **F3 is not a conflict:** the debug screen key and the debug modifier (both F3) are one entry again, as
+  meant ("Hold it for the debug combinations"); Minecraft keeps them outside its list of debug combinations,
+  so both were shown on F3 as a clash.
+- **Made to share a key:** `situations.json` rules can say which actions an action is made to share its key
+  with (`shares`). Litematica's schematic pick block keys only act when a schematic block is aimed at and
+  leave the key to Minecraft's Pick Block otherwise, so the two never count as a conflict (the right-click
+  list says "made to share this key").
 - **Multi Key Bindings' extra bindings** are named after their action (a second Auto-Jump Toggle binding on
   the middle mouse button showed as "Middle Button", the name of its key).
 - **Right-click a key** with more than one action to tick the pairs that are not conflicts; the key stays a

@@ -48,9 +48,10 @@ public final class Situations {
 
     /**
      * What a rule says about the matching actions: their situations (null = keep), a modifier the mod adds,
-     * and the options they need ({@code <class>#<static field>}, empty = none).
+     * the options they need ({@code <class>#<static field>}, empty = none) and the actions they are made to share
+     * their key with ({@code "shares"}: action ids, never a conflict with those).
      */
-    public record Rule(Pattern pattern, Set<String> when, String adds, List<String> needs) {}
+    public record Rule(Pattern pattern, Set<String> when, String adds, List<String> needs, List<String> shares) {}
 
     private static final List<Rule> RULES = new ArrayList<>();
 
@@ -93,17 +94,22 @@ public final class Situations {
                     when = Collections.unmodifiableSet(when);
                 }
                 String adds = o.has("adds") ? o.get("adds").getAsString().toLowerCase(Locale.ROOT) : null;
-                List<String> needs = new ArrayList<>();
-                if (o.has("needs")) {
-                    JsonElement n = o.get("needs");
-                    if (n.isJsonArray()) for (JsonElement x : n.getAsJsonArray()) needs.add(x.getAsString());
-                    else needs.add(n.getAsString());
-                }
-                RULES.add(new Rule(Pattern.compile(o.get("match").getAsString()), when, adds, List.copyOf(needs)));
+                RULES.add(new Rule(Pattern.compile(o.get("match").getAsString()), when, adds,
+                        strings(o, "needs"), strings(o, "shares")));
             } catch (Exception e) {
                 Keycaps.LOGGER.warn("Skipping a situation rule that is not valid: {}", r, e);
             }
         }
+    }
+
+    /** A rule field that is one string or a list of strings. */
+    private static List<String> strings(JsonObject o, String field) {
+        if (!o.has(field)) return List.of();
+        List<String> out = new ArrayList<>();
+        JsonElement n = o.get(field);
+        if (n.isJsonArray()) for (JsonElement x : n.getAsJsonArray()) out.add(x.getAsString());
+        else out.add(n.getAsString());
+        return List.copyOf(out);
     }
 
     /** The first rule for this action, or null. */
