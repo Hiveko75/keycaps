@@ -21,6 +21,15 @@ an option, Keycaps cannot read it and treats the key as always on (as before), a
   selectionNudge/Grab/GrowModifier and schematicVersionCycleModifier (Tool Item Enabled, rendering on; they
   also only act while holding the tool item: situation `litematica_tool`).
 
+**Made to share a key (`shares`): never a conflict with those**
+- Litematica's pickBlockFirst / Last with Minecraft's Pick Block (they only act on schematic blocks).
+- Litematica's easyPlaceUseKey with Minecraft's Use (Easy Place works through the use key; Litematica's own
+  default is the right mouse button).
+- Litematica's toolSelectModifierBlock1 / 2 (held while clicking with the tool) with the scroll-wheel modifiers
+  selectionNudge / Grab / GrowModifier, operationModeChangeModifier and schematicVersionCycleModifier (held
+  while scrolling): Litematica's own defaults put toolSelectModifierBlock1 and selectionNudgeModifier both on
+  Left Alt.
+
 **Only changes what is shown while held (`passive`): never a conflict**
 - MiniHUD: requiredKey (the info lines only show while it is held).
 - Litematica: renderOverlayThroughBlocks, invertGhostBlockRenderState, invertOverlayRenderState,

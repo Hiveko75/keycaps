@@ -25,8 +25,9 @@
     {"match": "^minihud:requiredkey ", "when": ["passive"]},
     {"match": "^minihud:inventorypreview(togglescreen)? ", "needs": "fi.dy.masa.minihud.config.Configs$Generic#INVENTORY_PREVIEW_ENABLED"},
     {"match": "^litematica:(renderoverlaythroughblocks|invertghostblockrenderstate|invertoverlayrenderstate|renderinfooverlay) ", "when": ["passive"]},
-    {"match": "^litematica:easyplaceusekey ", "needs": "fi.dy.masa.litematica.config.Configs$Generic#EASY_PLACE_MODE"},
+    {"match": "^litematica:easyplaceusekey ", "needs": "fi.dy.masa.litematica.config.Configs$Generic#EASY_PLACE_MODE", "shares": ["key.use"]},
     {"match": "^litematica:pickblock(first|last) ", "needs": ["fi.dy.masa.litematica.config.Configs$Generic#PICK_BLOCK_ENABLED", "fi.dy.masa.litematica.config.Configs$Visuals#ENABLE_RENDERING", "fi.dy.masa.litematica.config.Configs$Visuals#ENABLE_SCHEMATIC_RENDERING"], "shares": ["key.pickItem"]},
+    {"match": "^litematica:toolselectmodifierblock[12] ", "when": ["litematica_tool"], "needs": ["fi.dy.masa.litematica.config.Configs$Generic#TOOL_ITEM_ENABLED", "fi.dy.masa.litematica.config.Configs$Visuals#ENABLE_RENDERING"], "shares": ["litematica:selectionNudgeModifier", "litematica:selectionGrabModifier", "litematica:selectionGrowModifier", "litematica:operationModeChangeModifier", "litematica:schematicVersionCycleModifier"]},
     {"match": "^litematica:(toolplacecorner[12]|toolselectelements|toolselectmodifierblock[12]|operationmodechangemodifier|selection(nudge|grab|grow)modifier|schematicversioncyclemodifier) ", "when": ["litematica_tool"], "needs": ["fi.dy.masa.litematica.config.Configs$Generic#TOOL_ITEM_ENABLED", "fi.dy.masa.litematica.config.Configs$Visuals#ENABLE_RENDERING"]}
   ]
 }

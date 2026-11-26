@@ -40,7 +40,8 @@ First version, Minecraft 26.3 (the other versions follow).
   `docs/masa-hotkeys.md`): also Tweakeroo's spyglass key (Spyglass Uses Tweak Zoom) and area selection offset
   (Area Selector), Litematica's version cycle modifier (tool item), and keys that only change what is shown
   while held (MiniHUD's required key; Litematica's render-through-blocks, invert rendering and info overlay
-  keys).
+  keys). Litematica's block-pick modifiers (used with a click) and its scroll-wheel modifiers share keys by
+  design (both on Left Alt by default), and its Easy Place key works through Minecraft's Use key.
 - **Icon:** the keyboard from Microsoft's Fluent Emoji (MIT License, notice in the jar).
 - **F3 is not a conflict:** the debug screen key and the debug modifier (both F3) are one entry again, as
   meant ("Hold it for the debug combinations"); Minecraft keeps them outside its list of debug combinations,
