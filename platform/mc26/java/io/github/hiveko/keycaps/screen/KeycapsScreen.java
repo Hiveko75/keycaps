@@ -134,8 +134,9 @@ public class KeycapsScreen extends Screen {
 
         // tabs: one per modifier layer; the plain keys are shown when none is selected
         tabs.clear();
-        int tabW = Math.min(60, (pw - 12) / Math.max(1, layers.size() - 1));
-        int tx = px + 6;
+        int tabCount = Math.max(1, layers.size() - 1);
+        int tabW = Math.min(60, (pw - 12) / tabCount);
+        int tx = px + (pw - (tabW * tabCount - 2)) / 2; // the row centred in the window, like the keyboard
         for (Layer l : layers) {
             if (l == Layer.NORMAL) continue;
             Button b = Button.builder(layerLabel(l), btn -> {
