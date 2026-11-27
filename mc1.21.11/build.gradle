@@ -2,7 +2,7 @@ plugins {
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 }
 
-// Same shared sources as the 26.x builds, plus platform/mc1.21.11/.
+// The 26.x sources (platform/mc26/java, renamed below) plus platform/mc1.21.11/.
 def root = file('..')
 def rootProps = new Properties()
 new File(root, 'gradle.properties').withInputStream { rootProps.load(it) }
@@ -15,7 +15,7 @@ base {
 }
 
 sourceSets.main {
-    java.srcDirs = [new File(root, 'src/main/java'), new File(root, 'platform/mc1.21.11/java')]
+    java.srcDirs = [layout.buildDirectory.dir('generated/mc26-for-1.21.11').get().asFile, new File(root, 'platform/mc1.21.11/java')]
     resources.srcDirs = [new File(root, 'src/main/resources'), new File(root, 'platform/mc1.21.11/resources')]
 }
 
@@ -26,6 +26,30 @@ repositories {
         content { includeGroup 'maven.modrinth' }
     }
 }
+
+// Keycaps is written once for 26.x (platform/mc26/java). 1.21.11 has the same GUI code under older names, so
+// the sources are copied here with these renames (Minecraft 26.1 renamed GuiGraphics to GuiGraphicsExtractor
+// and its render methods to extract..., Fabric API renamed KeyBindingHelper and Screens' methods).
+// What differs otherwise is in platform/mc1.21.11/java (Compat).
+def mc26Renames = [
+    'super.extractRenderState('      : 'super.render(',
+    'public void extractRenderState(': 'public void render(',
+    'GuiGraphicsExtractor'           : 'GuiGraphics',
+    'g.text('                        : 'g.drawString(',
+    'g.centeredText('                : 'g.drawCenteredString(',
+    'g.outline('                     : 'g.renderOutline(',
+    'Screens.getWidgets('            : 'Screens.getButtons(',
+    'net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper': 'net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper',
+    'KeyMappingHelper.registerKeyMapping(' : 'KeyBindingHelper.registerKeyBinding(',
+    'KeyMappingHelper.'              : 'KeyBindingHelper.',
+]
+def mc26Sources = tasks.register('mc26Sources', Copy) {
+    from(new File(root, 'platform/mc26/java'))
+    into(layout.buildDirectory.dir('generated/mc26-for-1.21.11'))
+    inputs.property('renames', mc26Renames.toString())
+    filter { String line -> mc26Renames.inject(line) { l, e -> l.replace(e.key, e.value) } }
+}
+tasks.named('compileJava') { dependsOn mc26Sources }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"

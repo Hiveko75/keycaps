@@ -1,5 +1,7 @@
 package io.github.hiveko.keycaps.model;
 
+import io.github.hiveko.keycaps.Compat;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.hiveko.keycaps.Keycaps;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -61,30 +63,31 @@ public final class Collector {
         Options o = mc.options;
         Mkb mkb = Mkb.get();
 
-        Set<KeyMapping> debug = new HashSet<>(List.of(o.debugKeys));
-        InputConstants.Key debugModifier = KeyMappingHelper.getBoundKeyOf(o.keyDebugModifier);
-        InputConstants.Key overlay = KeyMappingHelper.getBoundKeyOf(o.keyDebugOverlay);
+        Set<KeyMapping> debug = new HashSet<>(Compat.debugKeys(o));
+        KeyMapping debugModifierMapping = Compat.debugModifier(o), overlayMapping = Compat.debugOverlay(o);
+        InputConstants.Key debugModifier = Compat.debugModifierKey();
+        InputConstants.Key overlay = overlayMapping == null ? null : KeyMappingHelper.getBoundKeyOf(overlayMapping);
 
         for (KeyMapping km : o.keyMappings) {
             if (km.isUnbound()) continue;
             InputConstants.Key key = KeyMappingHelper.getBoundKeyOf(km);
             String id = km.getName();
             Component name = Component.translatable(id);
-            Component source = km.getCategory().label();
-            String context = km.getCategory().id().toString() + " " + source.getString();
+            Component source = Compat.categoryLabel(km);
+            String context = Compat.categoryId(km) + " " + source.getString();
             String group = Groups.groupOf(id, context);
             Situations.Rule rule = Situations.ruleOf(id, context);
             Component off = offNote(rule);
             Set<String> when = off != null ? Situations.SWITCHED_OFF : Situations.of(rule, Situations.IN_WORLD);
             rememberShares(id, rule);
             // the overlay (F3) and the debug modifier are not in Options.debugKeys, only the F3 + … combinations
-            if (debug.contains(km) || km == o.keyDebugModifier || km == o.keyDebugOverlay) {
-                if (km == o.keyDebugModifier) {
+            if (debug.contains(km) || km == debugModifierMapping || km == overlayMapping) {
+                if (km == debugModifierMapping) {
                     if (!key.equals(overlay)) {
                         out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group,
                                 join(Component.translatable("keycaps.note.debug_modifier"), off), when));
                     }
-                } else if (km == o.keyDebugOverlay) {
+                } else if (km == overlayMapping) {
                     Component note = key.equals(debugModifier) ? Component.translatable("keycaps.note.debug_modifier") : null;
                     out.add(new Entry(Layer.NORMAL, key.getName(), id, name, source, group, join(note, off), when));
                 } else {
@@ -110,6 +113,7 @@ public final class Collector {
         }
 
         Malilib.collect(out);
+        Compat.addHardcodedDebug(out);
         addFixed(out, o, mkb, debug);
         return out;
     }
@@ -292,7 +296,7 @@ public final class Collector {
                     if ((boolean) isUnbound.invoke(b)) continue;
                     InputConstants.Key key = (InputConstants.Key) getKey.invoke(b);
                     Object cat = getCategory.invoke(b);
-                    String category = cat instanceof KeyMapping.Category c ? c.id().toString() : "";
+                    String category = Compat.categoryIdOf(cat);
                     String action = (String) getAction.invoke(b);
                     out.add(new Extra(String.valueOf(getId.invoke(b)), action, key.getName(),
                             Component.translatable(translationKey(b, action)), category));
@@ -388,7 +392,7 @@ public final class Collector {
             if (ordinary.isEmpty()) {
                 addWithModifiers(out, main, held, id, name, source, group, when, off);
             } else if (held.size() == 1) {
-                String debugKey = KeyMappingHelper.getBoundKeyOf(Minecraft.getInstance().options.keyDebugModifier).getName();
+                String debugKey = Compat.debugModifierKey().getName();
                 Layer layer = held.get(0).equals(debugKey) ? Layer.F3 : Layer.hold(held.get(0));
                 out.add(new Entry(layer, main, id, name, source, group, off, when));
             }
@@ -403,7 +407,7 @@ public final class Collector {
                 return InputConstants.Type.MOUSE.getOrCreate(code + 100).getName();
             }
             if (code <= 0) return null;
-            return InputConstants.Type.KEYBOARD.getOrCreate(code).getName();
+            return Compat.KEYBOARD.getOrCreate(code).getName();
         }
     }
 

@@ -2,7 +2,7 @@
 
 ## 1.0.0 (not released yet)
 
-First version, Minecraft 26.3 (the other versions follow).
+First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
 
 - **Keyboard map** (key: Home, which also closes it; also on the title and pause screens): a full keyboard
   with the numeric keypad and the three mouse buttons, in a window that fills the screen with a margin
@@ -13,6 +13,10 @@ First version, Minecraft 26.3 (the other versions follow).
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer. On the plain layer a key that only works with a
   modifier shows it in grey ("Ctrl: Drop").
+- **Every version:** the same map on 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1. Before 1.21.9 the F3
+  combinations are not key mappings, so 1.21.1 lists Minecraft's fixed ones (F3 + A, B, C, D, G, H, I, L, N,
+  P, Q, S, T, F4, Esc, 1, 2, 3) with the names from its F3 + Q help. On GLFW versions (26.2 and older) the
+  extra ISO key is world.2 on Windows and world.1 elsewhere.
 - **Reads every binding live:** Minecraft's key mappings (and so every mod in the Key Binds menu), the
   debug combinations, Multi Key Bindings' extra bindings and modifiers, and malilib hotkeys (MiniHUD,
   Tweakeroo, Litematica, …). The plain keyboard shows single keys only; combinations have their own tabs:

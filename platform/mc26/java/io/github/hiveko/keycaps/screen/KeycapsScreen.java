@@ -1,5 +1,7 @@
 package io.github.hiveko.keycaps.screen;
 
+import io.github.hiveko.keycaps.Compat;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.hiveko.keycaps.Keycaps;
 import io.github.hiveko.keycaps.KeycapsConfig;
@@ -199,7 +201,7 @@ public class KeycapsScreen extends Screen {
 
         CaptionSizeSlider(int x, int y, int w, int h) {
             super(x, y, w, h, Component.empty(), 0);
-            steps = Math.max(1, minecraft.getWindow().getGuiScale());
+            steps = Math.max(1, (int) minecraft.getWindow().getGuiScale());
             int n = captionPixels();
             value = steps <= 1 ? 1 : (n - 1) / (double) (steps - 1);
             active = steps > 1;
@@ -258,23 +260,23 @@ public class KeycapsScreen extends Screen {
             return Component.translatable(l.translationKey, Labels.keyLabel(l.holdKey));
         }
         if (l == Layer.F3) {
-            return Component.translatable(l.translationKey, KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getDisplayName());
+            return Component.translatable(l.translationKey, Compat.debugModifierKey().getDisplayName());
         }
         return Component.translatable(l.translationKey);
     }
 
     /** The layer being shown: the one whose modifier key is held, else the selected tab. */
     private Layer view() {
-        if (InputConstants.isKeyDown(InputConstants.KEY_LCONTROL) || InputConstants.isKeyDown(InputConstants.KEY_RCONTROL)) return Layer.CTRL;
-        if (InputConstants.isKeyDown(InputConstants.KEY_LALT) || InputConstants.isKeyDown(InputConstants.KEY_RALT)) return Layer.ALT;
+        if (Compat.isKeyDown(InputConstants.KEY_LCONTROL) || Compat.isKeyDown(InputConstants.KEY_RCONTROL)) return Layer.CTRL;
+        if (Compat.isKeyDown(InputConstants.KEY_LALT) || Compat.isKeyDown(InputConstants.KEY_RALT)) return Layer.ALT;
         if (layers.contains(Layer.SHIFT)
-                && (InputConstants.isKeyDown(InputConstants.KEY_LSHIFT) || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT))) return Layer.SHIFT;
-        InputConstants.Key dbg = KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier);
-        if (dbg.getType() == InputConstants.Type.KEYBOARD && InputConstants.isKeyDown(dbg.getValue())) return Layer.F3;
+                && (Compat.isKeyDown(InputConstants.KEY_LSHIFT) || Compat.isKeyDown(InputConstants.KEY_RSHIFT))) return Layer.SHIFT;
+        InputConstants.Key dbg = Compat.debugModifierKey();
+        if (dbg.getType() == Compat.KEYBOARD && Compat.isKeyDown(dbg.getValue())) return Layer.F3;
         for (Layer l : layers) {
             if (!l.isHold()) continue;
             InputConstants.Key k = InputConstants.getKey(l.holdKey);
-            if (k.getType() == InputConstants.Type.KEYBOARD && InputConstants.isKeyDown(k.getValue())) return l;
+            if (k.getType() == Compat.KEYBOARD && Compat.isKeyDown(k.getValue())) return l;
         }
         return selected;
     }
@@ -320,11 +322,11 @@ public class KeycapsScreen extends Screen {
         if (popup != null) {
             popup.extract(g, realMouseX, realMouseY);
         } else if (hoveredKey != null) {
-            g.setComponentTooltipForNextFrame(font, keyTooltip(hoveredKey), mouseX, mouseY);
+            Compat.tooltip(g, font, keyTooltip(hoveredKey), mouseX, mouseY);
         } else if (hoveredElsewhere) {
-            g.setComponentTooltipForNextFrame(font, elsewhereTooltip(), mouseX, mouseY);
+            Compat.tooltip(g, font, elsewhereTooltip(), mouseX, mouseY);
         } else if (hoveredLegend != null) {
-            g.setComponentTooltipForNextFrame(font, List.of(
+            Compat.tooltip(g, font, List.of(
                     Component.translatable("keycaps.group." + hoveredLegend).withStyle(ChatFormatting.WHITE),
                     Component.translatable(hoveredLegend.equals(filterGroup) ? "keycaps.tooltip.legend.off" : "keycaps.tooltip.legend")
                             .withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
@@ -333,13 +335,13 @@ public class KeycapsScreen extends Screen {
 
     /** The key's own label is drawn a little smaller: one screen pixel less per font pixel than the GUI scale. */
     private float captionScale() {
-        int s = minecraft.getWindow().getGuiScale();
+        int s = (int) minecraft.getWindow().getGuiScale();
         return s >= 2 ? (s - 1f) / s : 1f;
     }
 
     /** Screen pixels per font pixel for the action names, from the caption size setting (50% by default). */
     private int captionPixels() {
-        int s = Math.max(1, minecraft.getWindow().getGuiScale());
+        int s = Math.max(1, (int) minecraft.getWindow().getGuiScale());
         int n = (int) Math.floor(s * KeycapsConfig.captionSize() / 100.0 + 0.05);
         return Math.max(1, Math.min(s, n));
     }
@@ -355,7 +357,7 @@ public class KeycapsScreen extends Screen {
         List<Entry> here = conflictsOnly && !conflict ? List.of() : filtered(all);
         Layer modifierLayer = Layer.ofModifier(c.key());
         boolean heldModifier = view != Layer.NORMAL && (modifierLayer == view
-                || (view == Layer.F3 && c.key().equals(KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getName()))
+                || (view == Layer.F3 && c.key().equals(Compat.debugModifierKey().getName()))
                 || (view.isHold() && c.key().equals(view.holdKey)));
 
         String caption = null;
@@ -381,12 +383,12 @@ public class KeycapsScreen extends Screen {
 
         // key label, top left
         int innerPx = x1 - x0 - 3;
-        g.pose().pushMatrix();
-        g.pose().translate(x0 + 2, y0 + 2);
-        g.pose().scale(cs, cs);
+        Compat.push(g);
+        Compat.translate(g, x0 + 2, y0 + 2);
+        Compat.scale(g, cs);
         String label = font.plainSubstrByWidth(Labels.keyLabel(c.key()), (int) (innerPx / cs));
         g.text(font, label, 0, 0, here.isEmpty() ? TEXT_DIM : 0xFFFFFFFF, false);
-        g.pose().popMatrix();
+        Compat.pop(g);
         // action name under it, in smaller text (caption size setting), as many lines as fit (at most 3)
         if (caption != null) {
             float fs = functionScale();
@@ -396,9 +398,9 @@ public class KeycapsScreen extends Screen {
             int maxLines = Math.max(1, Math.min(3, (int) ((y1 - y0 - 3 - labelH) / lineH)));
             List<FormattedCharSequence> lines = font.split(Component.literal(caption), innerW);
             int n = Math.min(lines.size(), maxLines);
-            g.pose().pushMatrix();
-            g.pose().translate(x0 + 2, y0 + 2 + labelH);
-            g.pose().scale(fs, fs);
+            Compat.push(g);
+            Compat.translate(g, x0 + 2, y0 + 2 + labelH);
+            Compat.scale(g, fs);
             for (int i = 0; i < n; i++) {
                 FormattedCharSequence line = lines.get(i);
                 if (i == n - 1 && lines.size() > n) {
@@ -406,7 +408,7 @@ public class KeycapsScreen extends Screen {
                 }
                 g.text(font, line, 0, font.lineHeight * i, textColor, false);
             }
-            g.pose().popMatrix();
+            Compat.pop(g);
         }
     }
 
@@ -526,7 +528,7 @@ public class KeycapsScreen extends Screen {
         if (l == Layer.CTRL) return "Ctrl:";
         if (l == Layer.ALT) return "Alt:";
         if (l == Layer.SHIFT) return "Shift:";
-        if (l == Layer.F3) return KeyMappingHelper.getBoundKeyOf(minecraft.options.keyDebugModifier).getDisplayName().getString() + ":";
+        if (l == Layer.F3) return Compat.debugModifierKey().getDisplayName().getString() + ":";
         if (l.isHold()) return Labels.keyLabel(l.holdKey) + ":";
         return "";
     }
@@ -621,12 +623,12 @@ public class KeycapsScreen extends Screen {
             int color = Groups.color(id);
             g.fill(x, y + 1, x + 6, y + 7, faded ? (color & 0x00FFFFFF) | 0x60000000 : color);
             if (chosen) g.outline(x - 1, y, 8, 8, 0xFFFFFFFF);
-            g.pose().pushMatrix();
-            g.pose().translate(x + 8, y + 1);
-            g.pose().scale(cs, cs);
+            Compat.push(g);
+            Compat.translate(g, x + 8, y + 1);
+            Compat.scale(g, cs);
             g.text(font, chosen ? name.copy().withStyle(ChatFormatting.UNDERLINE) : name, 0, 0,
                     chosen ? TEXT : faded ? TEXT_FAINT : TEXT_DIM, false);
-            g.pose().popMatrix();
+            Compat.pop(g);
             LegendHit hit = new LegendHit(x - 1, y - 1, x + widths[i] + 1, y + 9, id);
             legendHits.add(hit);
             if (hit.contains(mouseX, mouseY)) hoveredLegend = id;
@@ -731,7 +733,7 @@ public class KeycapsScreen extends Screen {
         }
 
         void extract(GuiGraphicsExtractor g, int mouseX, int mouseY) {
-            g.nextStratum();
+            Compat.nextLayer(g);
             g.fill(x, y, x + w, y + h, 0xF0101318);
             g.outline(x, y, w, h, 0xFFFFFFFF);
             g.text(font, ellipsize(title().getString(), w - 12), x + 6, y + 6, TEXT, false);
@@ -806,7 +808,7 @@ public class KeycapsScreen extends Screen {
             popup = null;
             return true;
         }
-        if (Keycaps.openKey != null && !Keycaps.openKey.isUnbound() && Keycaps.openKey.matches(event)) {
+        if (Keycaps.openKey != null && !Keycaps.openKey.isUnbound() && Compat.matches(Keycaps.openKey, event)) {
             onClose();
             return true;
         }
@@ -814,11 +816,11 @@ public class KeycapsScreen extends Screen {
     }
 
     private void openKeyBinds() {
-        minecraft.gui.setScreen(new KeyBindsScreen(this, minecraft.options));
+        Compat.setScreen(new KeyBindsScreen(this, minecraft.options));
     }
 
     @Override
     public void onClose() {
-        minecraft.gui.setScreen(parent);
+        Compat.setScreen(parent);
     }
 }

@@ -51,6 +51,12 @@
   "keycaps.fixed.cycle_languages": "Cycle languages",
   "keycaps.note.needs": "Works only while %s is on",
   "keycaps.source.mkb": "Multi Key Bindings",
+  "keycaps.source.debug": "Debug",
+  "keycaps.debug.overlay": "Toggle Overlay",
+  "keycaps.debug.crash": "Debug Crash",
+  "keycaps.debug.profiling_chart": "Profiling Chart",
+  "keycaps.debug.fps_charts": "Fps Charts",
+  "keycaps.debug.network_charts": "Network Charts",
 
   "keycaps.group.movement": "Movement",
   "keycaps.group.action": "Attack & use",

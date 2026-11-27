@@ -2,7 +2,7 @@ plugins {
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 }
 
-// Same shared sources as the 26.x builds, plus platform/mc1.21.1/.
+// The 26.x sources (platform/mc26/java, renamed below) plus platform/mc1.21.1/.
 def root = file('..')
 def rootProps = new Properties()
 new File(root, 'gradle.properties').withInputStream { rootProps.load(it) }
@@ -15,7 +15,7 @@ base {
 }
 
 sourceSets.main {
-    java.srcDirs = [new File(root, 'src/main/java'), new File(root, 'platform/mc1.21.1/java')]
+    java.srcDirs = [layout.buildDirectory.dir('generated/mc26-for-1.21.1').get().asFile, new File(root, 'platform/mc1.21.1/java')]
     resources.srcDirs = [new File(root, 'src/main/resources'), new File(root, 'platform/mc1.21.1/resources')]
 }
 
@@ -26,6 +26,42 @@ repositories {
         content { includeGroup 'maven.modrinth' }
     }
 }
+
+// Keycaps is written once for 26.x (platform/mc26/java). 1.21.1 has most of the GUI code under older names, so
+// the sources are copied here with these renames (Minecraft 26.1 renamed GuiGraphics to GuiGraphicsExtractor
+// and its render methods to extract..., Fabric API renamed KeyBindingHelper and Screens' methods).
+// What differs otherwise is in platform/mc1.21.1/java (Compat).
+def mc26Renames = [
+    'super.extractRenderState('      : 'super.render(',
+    'public void extractRenderState(': 'public void render(',
+    'GuiGraphicsExtractor'           : 'GuiGraphics',
+    'g.text('                        : 'g.drawString(',
+    'g.centeredText('                : 'g.drawCenteredString(',
+    'g.outline('                     : 'g.renderOutline(',
+    'Screens.getWidgets('            : 'Screens.getButtons(',
+    'net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper': 'net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper',
+    'KeyMappingHelper.registerKeyMapping(' : 'KeyBindingHelper.registerKeyBinding(',
+    'KeyMappingHelper.'              : 'KeyBindingHelper.',
+    // 1.21.1 only: Identifier was ResourceLocation, and the input methods took plain values (small records
+    // named KeyEvent and MouseButtonEvent in platform/mc1.21.1/java stand in for 1.21.9's events)
+    'import net.minecraft.resources.Identifier;'          : 'import net.minecraft.resources.ResourceLocation;',
+    'Identifier'                                          : 'ResourceLocation',
+    'import net.minecraft.client.input.KeyEvent;'         : 'import io.github.hiveko.keycaps.screen.KeyEvent;',
+    'import net.minecraft.client.input.MouseButtonEvent;' : 'import io.github.hiveko.keycaps.screen.MouseButtonEvent;',
+    'public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {':
+        'public boolean mouseClicked(double eventX, double eventY, int eventButton) { MouseButtonEvent event = new MouseButtonEvent(eventX, eventY, eventButton); boolean doubleClick = false;',
+    'super.mouseClicked(event, doubleClick)'              : 'super.mouseClicked(event.x(), event.y(), event.button())',
+    'public boolean keyPressed(KeyEvent event) {':
+        'public boolean keyPressed(int eventKey, int eventScancode, int eventModifiers) { KeyEvent event = new KeyEvent(eventKey, eventScancode, eventModifiers);',
+    'super.keyPressed(event)'                             : 'super.keyPressed(event.key(), event.scancode(), event.modifiers())',
+]
+def mc26Sources = tasks.register('mc26Sources', Copy) {
+    from(new File(root, 'platform/mc26/java'))
+    into(layout.buildDirectory.dir('generated/mc26-for-1.21.1'))
+    inputs.property('renames', mc26Renames.toString())
+    filter { String line -> mc26Renames.inject(line) { l, e -> l.replace(e.key, e.value) } }
+}
+tasks.named('compileJava') { dependsOn mc26Sources }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"

@@ -4,14 +4,11 @@ import com.mojang.blaze3d.platform.InputConstants;
 import io.github.hiveko.keycaps.screen.KeycapsScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,30 +24,25 @@ public class Keycaps implements ClientModInitializer {
     public static final String MOD_ID = "keycaps";
     public static final Logger LOGGER = LoggerFactory.getLogger("Keycaps");
 
-    public static final KeyMapping.Category CATEGORY =
-            KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "main"));
     public static KeyMapping openKey;
 
     @Override
     public void onInitializeClient() {
         KeycapsConfig.load();
-        openKey = KeyMappingHelper.registerKeyMapping(
-                new KeyMapping("key.keycaps.open", InputConstants.Type.KEYBOARD, InputConstants.KEY_HOME, CATEGORY));
+        openKey = Compat.registerKey("key.keycaps.open", InputConstants.KEY_HOME, MOD_ID, "main");
 
         // In game: the key mapping is ticked as usual.
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             while (openKey.consumeClick()) {
-                if (mc.gui.screen() == null) KeycapsApi.open(null);
+                if (Compat.screen() == null) KeycapsApi.open(null);
             }
         });
 
         // Title and pause screens don't tick key mappings, so the key is checked there directly.
         ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
             if (screen instanceof TitleScreen || screen instanceof PauseScreen) {
-                ScreenKeyboardEvents.afterKeyPress(screen).register((s, event) -> {
-                    if (!openKey.isUnbound() && openKey.matches(event) && Minecraft.getInstance().gui.screen() == s) {
-                        KeycapsApi.open(s);
-                    }
+                Compat.afterKeyPress(screen, openKey, s -> {
+                    if (Compat.screen() == s) KeycapsApi.open(s);
                 });
             }
         });
@@ -59,6 +51,6 @@ public class Keycaps implements ClientModInitializer {
 
     /** Opens the keyboard map (used by {@link KeycapsApi}). */
     static void openScreen(net.minecraft.client.gui.screens.Screen parent) {
-        Minecraft.getInstance().gui.setScreen(new KeycapsScreen(parent));
+        Compat.setScreen(new KeycapsScreen(parent));
     }
 }

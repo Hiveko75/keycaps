@@ -1,5 +1,7 @@
 package io.github.hiveko.keycaps.model;
 
+import io.github.hiveko.keycaps.Compat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,7 @@ public final class KeyboardShape {
     public static final float HEIGHT = 6.5f;
 
     /** The extra ISO key next to left Shift (SDL "non-US backslash"); Minecraft 26.3 names it world.1. */
-    public static final String ISO_EXTRA = "key.keyboard.world.1";
+    public static final String ISO_EXTRA = Compat.ISO_EXTRA;
 
     private KeyboardShape() {}
 

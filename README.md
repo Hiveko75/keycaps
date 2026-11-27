@@ -1,6 +1,6 @@
 # Keycaps
 
-A visual keyboard map of your key bindings, for Fabric. **1.0.0 in testing (Minecraft 26.3 first).**
+A visual keyboard map of your key bindings, for Fabric. **1.0.0 in testing.**
 
 Press **Home** (changeable in Key Binds) in game, on the title screen or on the pause screen. What it does:
 - A full keyboard with the numeric keypad (left out when the window is too small), drawn in a window that
@@ -68,6 +68,12 @@ version's `CHANGELOG.md` section as notes. Locally (Java 25 and 21):
 ./gradlew -p mc1.21.11 build     # -> mc1.21.11/build/libs
 ./gradlew -p mc1.21.1 build      # -> mc1.21.1/build/libs
 ```
+
+The code is written once for 26.x in `platform/mc26/java`; what differs by version is in
+`platform/mc<version>/java/io/github/hiveko/keycaps/Compat.java` (key values: scan codes on 26.3, GLFW key
+codes before; the extra ISO key's name; showing a screen; key categories; the F3 keys, which are key
+mappings from 1.21.9 and hard-coded before; drawing). The 1.21.11 and 1.21.1 builds copy `platform/mc26/java`
+with a short list of renames (see their `build.gradle`).
 
 Client-side only. License: All rights reserved. The icon is "Keyboard" from Microsoft's
 [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT License; the notice is in the jar as

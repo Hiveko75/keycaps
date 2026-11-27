@@ -51,6 +51,12 @@
   "keycaps.fixed.cycle_languages": "Nyelvek váltogatása",
   "keycaps.note.needs": "Csak akkor működik, ha be van kapcsolva: %s",
   "keycaps.source.mkb": "Multi Key Bindings",
+  "keycaps.source.debug": "Debug",
+  "keycaps.debug.overlay": "Debugfelület ki- vagy bekapcsolása",
+  "keycaps.debug.crash": "Összeomlás előidézése",
+  "keycaps.debug.profiling_chart": "Teljesítménygrafikon",
+  "keycaps.debug.fps_charts": "FPS-grafikonok",
+  "keycaps.debug.network_charts": "Hálózati grafikonok",
 
   "keycaps.group.movement": "Mozgás",
   "keycaps.group.action": "Támadás, használat",

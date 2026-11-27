@@ -1,5 +1,7 @@
 package io.github.hiveko.keycaps.model;
 
+import io.github.hiveko.keycaps.Compat;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -44,7 +46,7 @@ public final class ModScreens {
         Screen screen = fromModMenu(mod, parent);
         if (screen == null) screen = fromMalilib(mod, parent);
         if (screen == null) return false;
-        Minecraft.getInstance().gui.setScreen(screen);
+        Compat.setScreen(screen);
         return true;
     }
 
