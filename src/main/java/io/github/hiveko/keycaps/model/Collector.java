@@ -114,6 +114,11 @@ public final class Collector {
         return out;
     }
 
+    private static boolean hasKeyMapping(Options o, String id) {
+        for (KeyMapping km : o.keyMappings) if (km.getName().equals(id)) return true;
+        return false;
+    }
+
     /**
      * Keys mods read directly instead of registering them ({@link Situations#fixed()}): a fixed key (Scroll Walk's
      * Alt) or a modifier on another action's key (Minecraft's Ctrl + Drop drops the whole stack). Shown with a
@@ -122,6 +127,7 @@ public final class Collector {
     private static void addFixed(List<Entry> out, Options o, Mkb mkb, Set<KeyMapping> debug) {
         for (Situations.Fixed f : Situations.fixed()) {
             if (!"minecraft".equals(f.mod()) && !FabricLoader.getInstance().isModLoaded(f.mod())) continue;
+            if (f.unless() != null && hasKeyMapping(o, f.unless())) continue; // the mod made it a key binding
             Situations.Rule rule = f.rule();
             Component name = Component.translatableWithFallback(f.name(), f.fallback());
             Component source = Component.literal(ModScreens.modName(f.mod()));

@@ -67,8 +67,11 @@ public final class Situations {
      * @param keys     Minecraft key names ({@code key.keyboard.left.alt}), or empty when {@code with} is used
      * @param with     the key binding whose key it uses, or null
      * @param rule     its situations, modifier, needs and shares (pattern unused)
+     * @param unless   a key binding id: when a key binding with this id exists the key is not fixed any more (a newer
+     *                 version of the mod made it a key binding), so this entry is left out; or null
      */
-    public record Fixed(String id, String mod, String name, String fallback, List<String> keys, String with, Rule rule) {}
+    public record Fixed(String id, String mod, String name, String fallback, List<String> keys, String with, Rule rule,
+                        String unless) {}
 
     /** The fixed keys from the last {@link #load()}. */
     public static List<Fixed> fixed() {
@@ -110,7 +113,8 @@ public final class Situations {
                     FIXED.add(new Fixed(o.get("id").getAsString(), o.has("mod") ? o.get("mod").getAsString() : "minecraft",
                             o.has("name") ? o.get("name").getAsString() : o.get("id").getAsString(),
                             o.has("fallback") ? o.get("fallback").getAsString() : o.get("id").getAsString(),
-                            strings(o, "key"), o.has("with") ? o.get("with").getAsString() : null, rule));
+                            strings(o, "key"), o.has("with") ? o.get("with").getAsString() : null, rule,
+                            o.has("unless") ? o.get("unless").getAsString() : null));
                 } catch (Exception e) {
                     Keycaps.LOGGER.warn("Skipping a fixed key that is not valid: {}", r, e);
                 }
