@@ -9,6 +9,9 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   (like Better Advancements; the keypad is left out when the window is too small for it). Every bound
   key is coloured by group, with a short caption on it and everything on it in the hover text with the
   mod it comes from. Actions that clash on the same key show in red.
+- **Hover text:** with Smart on, only the key's actions and the mod they come from ("Pick Block
+  Litematica"). With Smart off it also says when an action works ("in menus"), its notes ("Works only
+  while … is on", "Hold … too") and the click hints.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions

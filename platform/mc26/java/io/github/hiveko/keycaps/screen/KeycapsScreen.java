@@ -660,7 +660,12 @@ public class KeycapsScreen extends Screen {
         return l == Layer.NORMAL ? Component.empty() : Component.empty().append(layerLabel(l)).append(" ");
     }
 
+    /**
+     * The key's actions with their source ("Pick Block  Litematica"), conflicts in red. With the smart check
+     * off it also says when an action works, its notes and the click hints; with it on, only the actions.
+     */
     private List<Component> keyTooltip(String key) {
+        boolean full = !KeycapsConfig.smartConflicts();
         List<Component> out = new ArrayList<>();
         out.add(Labels.keyName(key).copy().withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD));
         boolean any = false;
@@ -672,13 +677,14 @@ public class KeycapsScreen extends Screen {
                 MutableComponent line = Component.empty().append(prefix(l)).append(e.name().copy());
                 line = line.withStyle(clash.contains(e.id()) ? ChatFormatting.RED : ChatFormatting.WHITE);
                 line.append(Component.literal("  " + e.source().getString()).withStyle(ChatFormatting.DARK_GRAY));
-                Component when = whenText(e);
+                Component when = full ? whenText(e) : null;
                 if (when != null) line.append(Component.literal(" · ").append(when).withStyle(ChatFormatting.DARK_GRAY));
                 out.add(line);
-                if (e.note() != null) out.add(Component.literal("   ").append(e.note()).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                if (full && e.note() != null) out.add(Component.literal("   ").append(e.note()).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
             }
         }
         if (!any) out.add(Component.translatable("keycaps.tooltip.nothing").withStyle(ChatFormatting.GRAY));
+        if (!full) return out;
         Layer view = view();
         String mod = ModScreens.modOf(shownEntry(key, view));
         out.add((mod != null ? Component.translatable("keycaps.tooltip.click.mod", ModScreens.modName(mod))
