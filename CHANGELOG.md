@@ -17,6 +17,8 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   plain layer also those it uses with Ctrl, Alt, Shift or a sequence key ("Ctrl: Save area"), and the hover
   text lists only that group's actions. Keys whose actions are switched off now (an option they need is
   off) are dark, with their action in grey; this also applies without a group chosen.
+- **Hover text per layer:** with a modifier tab selected or the modifier held (Ctrl +, Alt +, Shift +, F3 +,
+  B + …) the hover text lists only that layer's actions; on the plain layer it lists all of them.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions

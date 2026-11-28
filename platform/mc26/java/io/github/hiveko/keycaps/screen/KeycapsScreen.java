@@ -639,7 +639,7 @@ public class KeycapsScreen extends Screen {
                 .sorted(Map.Entry.comparingByKey()).forEach(e -> sorted.put(e.getKey(), e.getValue()));
         for (Map.Entry<String, Map<Layer, List<Entry>>> k : sorted.entrySet()) {
             for (Layer l : layers) {
-                if (hidden(l, view())) continue;
+                if (hidden(l, view()) || (view() != Layer.NORMAL && l != view())) continue;
                 for (Entry e : k.getValue().getOrDefault(l, List.of())) {
                     out.add(Component.empty().append(prefix(l)).append(Labels.keyName(k.getKey())).append(": ")
                             .append(e.name()).append(Component.literal("  " + e.source().getString()).withStyle(ChatFormatting.DARK_GRAY)));
@@ -730,7 +730,8 @@ public class KeycapsScreen extends Screen {
         boolean any = false;
         Layer shown = view();
         for (Layer l : layers) {
-            if (hidden(l, shown)) continue;
+            // a modifier layer shown (its tab, or the key held): only that layer's actions
+            if (hidden(l, shown) || (shown != Layer.NORMAL && l != shown)) continue;
             List<Entry> list = on(key, l);
             Set<String> clash = clashingIds(key, l);
             for (Entry e : list) {
