@@ -13,6 +13,10 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   Litematica"). With Smart off it also says when an action works ("in menus"), its notes ("Works only
   while … is on", "Hold … too") and the click hints. With Smart on, the debug combinations (F3 +) are
   only listed and shown on the keys while the F3 + tab is selected or F3 is held.
+- **Colour legend:** choosing a group (Litematica, Tweakeroo …) shows all of its keys in its colour, on the
+  plain layer also those it uses with Ctrl, Alt, Shift or a sequence key ("Ctrl: Save area"), and the hover
+  text lists only that group's actions. Keys whose actions are switched off now (an option they need is
+  off) are dark, with their action in grey; this also applies without a group chosen.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions

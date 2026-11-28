@@ -381,7 +381,34 @@ public class KeycapsScreen extends Screen {
 
         String caption = null;
         int fill, textColor = TEXT;
-        if (!here.isEmpty()) {
+        boolean lit = !here.isEmpty();
+        if (filterGroup != null && !conflictsOnly) {
+            // one colour group chosen: all its keys, also from the other layers; switched-off ones dark
+            List<Entry> mine = groupEntries(c.key(), view);
+            Entry first = firstActive(mine);
+            lit = first != null;
+            if (first == null && !mine.isEmpty()) first = mine.get(0);
+            if (first != null) {
+                caption = (first.layer() != view ? shortLayer(first.layer()) + " " : "") + Labels.caption(first);
+                if (distinctIds(mine) > 1) caption = caption + " +" + (distinctIds(mine) - 1);
+            }
+            if (lit) {
+                fill = (Groups.color(first.group()) & 0x00FFFFFF) | 0xD8000000;
+            } else if (first != null) {
+                fill = 0xA0262B31;
+                textColor = TEXT_DIM;
+            } else {
+                fill = 0x80181C21;
+                textColor = TEXT_FAINT;
+            }
+        } else if (!here.isEmpty() && firstActive(here) == null) {
+            // bound, but every action on it is switched off now
+            fill = 0xA0262B31;
+            textColor = TEXT_DIM;
+            lit = false;
+            caption = Labels.caption(here.get(0));
+            if (distinctIds(all) > 1) caption = caption + " +" + (distinctIds(all) - 1);
+        } else if (!here.isEmpty()) {
             fill = (Groups.color(here.get(0).group()) & 0x00FFFFFF) | 0xD8000000;
             caption = Labels.caption(here.get(0));
             if (distinctIds(all) > 1) caption = caption + " +" + (distinctIds(all) - 1);
@@ -406,7 +433,7 @@ public class KeycapsScreen extends Screen {
         Compat.translate(g, x0 + 2, y0 + 2);
         Compat.scale(g, cs);
         String label = font.plainSubstrByWidth(Labels.keyLabel(c.key()), (int) (innerPx / cs));
-        g.text(font, label, 0, 0, here.isEmpty() ? TEXT_DIM : 0xFFFFFFFF, false);
+        g.text(font, label, 0, 0, lit ? 0xFFFFFFFF : TEXT_DIM, false);
         Compat.pop(g);
         // action name under it, in smaller text (caption size setting), as many lines as fit (at most 3)
         if (caption != null) {
@@ -504,6 +531,11 @@ public class KeycapsScreen extends Screen {
 
     /** The action the key shows (its caption): first in the layer shown, else the grey one from another layer. */
     private Entry shownEntry(String key, Layer view) {
+        if (filterGroup != null && !conflictsOnly) {
+            List<Entry> mine = groupEntries(key, view);
+            Entry first = firstActive(mine);
+            return first != null ? first : mine.isEmpty() ? null : mine.get(0);
+        }
         List<Entry> all = on(key, view);
         List<Entry> here = conflictsOnly && !isConflict(key, view) ? List.of() : filtered(all);
         if (!here.isEmpty()) return here.get(0);
@@ -517,6 +549,27 @@ public class KeycapsScreen extends Screen {
         List<Entry> out = new ArrayList<>();
         for (Entry e : list) if (e.group().equals(filterGroup)) out.add(e);
         return out;
+    }
+
+    /**
+     * The chosen colour group's actions on this key: those of the layer shown, and on the plain layer also those
+     * of the other layers (so a Ctrl + or B + key of the group lights up too).
+     */
+    private List<Entry> groupEntries(String key, Layer view) {
+        List<Entry> out = new ArrayList<>(filtered(on(key, view)));
+        if (view == Layer.NORMAL) {
+            for (Layer l : layers) {
+                if (l == Layer.NORMAL || hidden(l, view)) continue;
+                out.addAll(filtered(on(key, l)));
+            }
+        }
+        return out;
+    }
+
+    /** The first action that is not switched off (its option is on), or null. */
+    private static Entry firstActive(List<Entry> list) {
+        for (Entry e : list) if (!e.when().contains(Situations.OFF)) return e;
+        return null;
     }
 
     /** With Smart on, the debug combinations (F3 +) only show while the F3 + layer is shown. */
@@ -681,9 +734,11 @@ public class KeycapsScreen extends Screen {
             List<Entry> list = on(key, l);
             Set<String> clash = clashingIds(key, l);
             for (Entry e : list) {
+                if (filterGroup != null && !e.group().equals(filterGroup)) continue;
                 any = true;
                 MutableComponent line = Component.empty().append(prefix(l)).append(e.name().copy());
-                line = line.withStyle(clash.contains(e.id()) ? ChatFormatting.RED : ChatFormatting.WHITE);
+                line = line.withStyle(clash.contains(e.id()) ? ChatFormatting.RED
+                        : e.when().contains(Situations.OFF) ? ChatFormatting.GRAY : ChatFormatting.WHITE);
                 line.append(Component.literal("  " + e.source().getString()).withStyle(ChatFormatting.DARK_GRAY));
                 Component when = full ? whenText(e) : null;
                 if (when != null) line.append(Component.literal(" · ").append(when).withStyle(ChatFormatting.DARK_GRAY));
