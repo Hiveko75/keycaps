@@ -373,11 +373,12 @@ public class KeycapsScreen extends Screen {
         List<Entry> all = on(c.key(), view);
         boolean conflict = isConflict(c.key(), view);
         List<Entry> here = conflictsOnly && !conflict ? List.of() : filtered(all);
-        Layer modifierLayer = Layer.ofModifier(c.key());
-        String held = heldSide();
-        boolean heldModifier = view != Layer.NORMAL && ((modifierLayer == view && (held == null || c.key().equals(held)))
-                || (view == Layer.F3 && c.key().equals(Compat.debugModifierKey().getName()))
-                || (view.isHold() && c.key().equals(view.holdKey)));
+        boolean heldModifier = isViewModifier(c.key(), view);
+        if (heldModifier && all.isEmpty() && !conflictsOnly) {
+            // the modifier of the layer shown (Alt on Alt +): its own actions stay on it
+            all = on(c.key(), Layer.NORMAL);
+            here = filtered(all);
+        }
 
         String caption = null;
         int fill, textColor = TEXT;
@@ -557,6 +558,7 @@ public class KeycapsScreen extends Screen {
      */
     private List<Entry> groupEntries(String key, Layer view) {
         List<Entry> out = new ArrayList<>(filtered(on(key, view)));
+        if (view != Layer.NORMAL && isViewModifier(key, view)) out.addAll(filtered(on(key, Layer.NORMAL)));
         if (view == Layer.NORMAL) {
             for (Layer l : layers) {
                 if (l == Layer.NORMAL || hidden(l, view)) continue;
@@ -564,6 +566,18 @@ public class KeycapsScreen extends Screen {
             }
         }
         return out;
+    }
+
+    /**
+     * True for the key that is the modifier of the layer shown: Alt (the held side, or either) on Alt +, the
+     * debug key on F3 +, B on B +.
+     */
+    private boolean isViewModifier(String key, Layer view) {
+        if (view == Layer.NORMAL) return false;
+        String held = heldSide();
+        return (Layer.ofModifier(key) == view && (held == null || key.equals(held)))
+                || (view == Layer.F3 && key.equals(Compat.debugModifierKey().getName()))
+                || (view.isHold() && key.equals(view.holdKey));
     }
 
     /** The first action that is not switched off (its option is on), or null. */
@@ -731,7 +745,8 @@ public class KeycapsScreen extends Screen {
         Layer shown = view();
         for (Layer l : layers) {
             // a modifier layer shown (its tab, or the key held): only that layer's actions
-            if (hidden(l, shown) || (shown != Layer.NORMAL && l != shown)) continue;
+            if (hidden(l, shown) || (shown != Layer.NORMAL && l != shown
+                    && !(l == Layer.NORMAL && isViewModifier(key, shown)))) continue;
             List<Entry> list = on(key, l);
             Set<String> clash = clashingIds(key, l);
             for (Entry e : list) {
