@@ -44,11 +44,34 @@ public final class KeycapsConfig {
         return shape;
     }
 
-    /** The shape to draw: the configured one, or a guess from the computer's region. */
+    /**
+     * The shape to draw: the configured one, or a guess. The country comes from the game's language when it
+     * is not American English (hu_hu → HU), else from the computer's regional format (Windows: Region), else
+     * from its display language; Windows in English with a Hungarian keyboard still gets ISO that way.
+     */
     public static Shape effectiveShape() {
         if (shape != Shape.AUTO) return shape;
-        String country = Locale.getDefault().getCountry();
+        String country = countryOf(gameLanguage());
+        if (country.isEmpty()) country = Locale.getDefault(Locale.Category.FORMAT).getCountry();
+        if (country.isEmpty()) country = Locale.getDefault().getCountry();
         return country.isEmpty() || ANSI_COUNTRIES.contains(country.toUpperCase(Locale.ROOT)) ? Shape.ANSI : Shape.ISO;
+    }
+
+    private static String gameLanguage() {
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            return mc == null || mc.getLanguageManager() == null ? "" : mc.getLanguageManager().getSelected();
+        } catch (RuntimeException | LinkageError e) {
+            return "";
+        }
+    }
+
+    /** "hu_hu" → "HU"; "" for American English (also the game's default, so it says nothing). */
+    private static String countryOf(String language) {
+        if (language == null) return "";
+        int i = language.indexOf('_');
+        if (i < 0 || language.equalsIgnoreCase("en_us")) return "";
+        return language.substring(i + 1).toUpperCase(Locale.ROOT);
     }
 
     public static void setShape(Shape s) {

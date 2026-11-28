@@ -23,6 +23,9 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   as Litematica's Selection Nudge Modifier), in its caption and hover text.
 - **Fly Speed Modifier** (Vanilla: Left Alt + mouse wheel): its key only works while flying in Creative or
   Spectator, or in Freecam, so it only clashes with actions that also work then.
+- **Keyboard: Auto** picks ISO (with the extra key next to left Shift, Í on Hungarian keyboards) from the game's
+  language (hu_hu → Hungary) or the computer's region format, not only from the display language: Windows
+  in English with a Hungarian keyboard showed ANSI and had no Í key.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions
