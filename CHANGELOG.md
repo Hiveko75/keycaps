@@ -11,8 +11,11 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   mod it comes from. Actions that clash on the same key show in red.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
-  real Ctrl, Alt, Shift or F3 key shows that layer. On the plain layer a key that only works with a
-  modifier shows it in grey ("Ctrl: Drop").
+  real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions
+  for that side (and those that work with either), and left/right bindings of the same key are no conflict.
+  Right Alt counts as Alt also when Windows reports Ctrl with it (AltGr). The first keys of malilib
+  sequences ("B +", "Z +") have tabs but are ordinary keys: pressing them doesn't switch the map. On the
+  plain layer a key that only works with a modifier shows it in grey ("Ctrl: Drop").
 - **Every version:** the same map on 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1. Before 1.21.9 the F3
   combinations are not key mappings, so 1.21.1 lists Minecraft's fixed ones (F3 + A, B, C, D, G, H, I, L, N,
   P, Q, S, T, F4, Esc, 1, 2, 3) with the names from its F3 + Q help. On GLFW versions (26.2 and older) the

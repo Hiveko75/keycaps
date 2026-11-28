@@ -268,25 +268,42 @@ public class KeycapsScreen extends Screen {
 
     /** The layer being shown: the one whose modifier key is held, else the selected tab. */
     private Layer view() {
+        // Right Alt first: as AltGr (Hungarian and other keyboards) Windows also reports Left Control with it
+        if (Compat.isKeyDown(InputConstants.KEY_RALT)) return Layer.ALT;
         if (Compat.isKeyDown(InputConstants.KEY_LCONTROL) || Compat.isKeyDown(InputConstants.KEY_RCONTROL)) return Layer.CTRL;
         if (Compat.isKeyDown(InputConstants.KEY_LALT) || Compat.isKeyDown(InputConstants.KEY_RALT)) return Layer.ALT;
         if (layers.contains(Layer.SHIFT)
                 && (Compat.isKeyDown(InputConstants.KEY_LSHIFT) || Compat.isKeyDown(InputConstants.KEY_RSHIFT))) return Layer.SHIFT;
         InputConstants.Key dbg = Compat.debugModifierKey();
         if (dbg.getType() == Compat.KEYBOARD && Compat.isKeyDown(dbg.getValue())) return Layer.F3;
-        for (Layer l : layers) {
-            if (!l.isHold()) continue;
-            InputConstants.Key k = InputConstants.getKey(l.holdKey);
-            if (k.getType() == Compat.KEYBOARD && Compat.isKeyDown(k.getValue())) return l;
-        }
+        // the first keys of malilib sequences (B, Z …) are ordinary keys: their layers are only shown from the tabs
         return selected;
+    }
+
+    /** The exact Ctrl, Alt or Shift key held now ("key.keyboard.right.alt"), or null (none, or a tab is shown). */
+    private static String heldSide() {
+        if (Compat.isKeyDown(InputConstants.KEY_RALT)) return "key.keyboard.right.alt"; // AltGr: see view()
+        if (Compat.isKeyDown(InputConstants.KEY_LCONTROL)) return "key.keyboard.left.control";
+        if (Compat.isKeyDown(InputConstants.KEY_RCONTROL)) return "key.keyboard.right.control";
+        if (Compat.isKeyDown(InputConstants.KEY_LALT)) return "key.keyboard.left.alt";
+        if (Compat.isKeyDown(InputConstants.KEY_RALT)) return "key.keyboard.right.alt";
+        if (Compat.isKeyDown(InputConstants.KEY_LSHIFT)) return "key.keyboard.left.shift";
+        if (Compat.isKeyDown(InputConstants.KEY_RSHIFT)) return "key.keyboard.right.shift";
+        return null;
     }
 
     private List<Entry> on(String key, Layer layer) {
         Map<Layer, List<Entry>> m = byKey.get(key);
         if (m == null) return List.of();
         List<Entry> l = m.get(layer);
-        return l == null ? List.of() : l;
+        if (l == null) return List.of();
+        // holding left or right Ctrl/Alt/Shift: only the actions for that side (or either side)
+        String held = heldSide();
+        String side = held != null && Layer.ofModifier(held) == layer ? held : null;
+        if (side == null) return l;
+        List<Entry> out = new ArrayList<>();
+        for (Entry e : l) if (e.worksWith(side)) out.add(e);
+        return out;
     }
 
     // ---------------------------------------------------------------- drawing
@@ -357,7 +374,8 @@ public class KeycapsScreen extends Screen {
         boolean conflict = isConflict(c.key(), view);
         List<Entry> here = conflictsOnly && !conflict ? List.of() : filtered(all);
         Layer modifierLayer = Layer.ofModifier(c.key());
-        boolean heldModifier = view != Layer.NORMAL && (modifierLayer == view
+        String held = heldSide();
+        boolean heldModifier = view != Layer.NORMAL && ((modifierLayer == view && (held == null || c.key().equals(held)))
                 || (view == Layer.F3 && c.key().equals(Compat.debugModifierKey().getName()))
                 || (view.isHold() && c.key().equals(view.holdKey)));
 
@@ -451,6 +469,7 @@ public class KeycapsScreen extends Screen {
         for (int i = 0; i < list.size(); i++) {
             for (int j = i + 1; j < list.size(); j++) {
                 Entry a = list.get(i), b = list.get(j);
+                if (a.side() != null && b.side() != null && !a.side().equals(b.side())) continue; // left vs right
                 String stored = KeycapsConfig.pair(layer.id, key, a.id(), b.id());
                 boolean together = !smart || (Situations.overlap(a.when(), b.when()) && !Collector.madeToShare(a, b));
                 out.add(new Pair(a, b, together, KeycapsConfig.notConflict(stored), stored));

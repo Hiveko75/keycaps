@@ -162,6 +162,9 @@ public final class Collector {
         }
     }
 
+    /** Marks a modifier that works on either side (left or right Ctrl, Alt, Shift). */
+    static final String ANY_SIDE = "*";
+
     /** The modifiers plus the one a situation rule says the mod adds itself (the emoji picker's Ctrl). */
     static List<String> withAdded(List<String> modifiers, Situations.Rule rule) {
         String added = Situations.addedModifier(rule);
@@ -169,7 +172,7 @@ public final class Collector {
         Layer layer = Layer.ofModifier(added);
         for (String m : modifiers) if (Layer.ofModifier(m) == layer) return modifiers;
         List<String> out = new ArrayList<>(modifiers);
-        out.add(0, added);
+        out.add(0, ANY_SIDE + added); // the mod checks Ctrl/Alt/Shift itself: either side works
         return out;
     }
 
@@ -194,11 +197,16 @@ public final class Collector {
     static void addWithModifiers(List<Entry> out, String key, List<String> modifiers, String id,
                                  Component name, Component source, String group, Set<String> when, Component extra) {
         Layer layer = Layer.NORMAL;
+        String side = null;
         List<String> other = new ArrayList<>();
         for (String m : modifiers) {
+            boolean anySide = m.startsWith(ANY_SIDE);
+            if (anySide) m = m.substring(ANY_SIDE.length());
             Layer l = Layer.ofModifier(m);
-            if (l != null && layer == Layer.NORMAL) layer = l;
-            else other.add(m);
+            if (l != null && layer == Layer.NORMAL) {
+                layer = l;
+                side = anySide ? null : m;
+            } else other.add(m);
         }
         Component note = null;
         if (!other.isEmpty()) {
@@ -209,7 +217,7 @@ public final class Collector {
             }
             note = Component.translatable("keycaps.note.hold", held);
         }
-        out.add(new Entry(layer, key, id, name, source, group, join(note, extra), when));
+        out.add(new Entry(layer, key, id, name, source, group, join(note, extra), when, side));
     }
 
     static void warnOnce(String what, Throwable t) {
