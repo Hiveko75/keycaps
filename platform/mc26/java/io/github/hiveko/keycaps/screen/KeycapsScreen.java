@@ -315,6 +315,7 @@ public class KeycapsScreen extends Screen {
         Layer view = view();
         int realMouseX = mouseX, realMouseY = mouseY;
         float cs = captionScale();
+        float labelScale = labelScaleFor(cs);
 
         g.fill(px, py, px + pw, py + ph, 0xD0101318);
         g.outline(px, py, pw, ph, 0xFF3C434C);
@@ -329,10 +330,17 @@ public class KeycapsScreen extends Screen {
         for (KeyboardShape.Cap c : caps) {
             int x0 = kbX + Math.round(c.x() * unit), y0 = kbY + Math.round(c.y() * unit);
             int x1 = kbX + Math.round((c.x() + c.w()) * unit) - 1, y1 = kbY + Math.round((c.y() + c.h()) * unit) - 1;
+            if (hover(c.key(), mouseX, mouseY)) hoveredKey = c.key();
+        }
+        java.util.Set<String> drawn = new HashSet<>();
+        for (KeyboardShape.Cap c : caps) {
+            int x0 = kbX + Math.round(c.x() * unit), y0 = kbY + Math.round(c.y() * unit);
+            int x1 = kbX + Math.round((c.x() + c.w()) * unit) - 1, y1 = kbY + Math.round((c.y() + c.h()) * unit) - 1;
             if (KeyboardShape.WHEEL.equals(c.key())) x0 -= 1; // joined to the middle button: one double button
-            boolean hover = mouseX >= x0 && mouseX < x1 && mouseY >= y0 && mouseY < y1;
-            if (hover) hoveredKey = c.key();
-            drawCap(g, c, x0, y0, x1, y1, view, hover, cs);
+            boolean second = !drawn.add(c.key()); // the lower part of the ISO Enter
+            if (second) y0 -= 1;
+            int fill = drawCap(g, c, x0, y0, x1, y1, view, c.key().equals(hoveredKey), labelScale, !second);
+            if (second) g.fill(x0 + 1, y0 - 1, x1 - 1, y0 + 1, fill); // no line between the two parts: one key
         }
         drawMouseFrame(g, view, mouseX, mouseY);
         drawElsewhere(g, view, mouseX, mouseY, cs);
@@ -415,7 +423,34 @@ public class KeycapsScreen extends Screen {
         return captionPixels() / (float) Math.max(1, minecraft.getWindow().getGuiScale());
     }
 
-    private void drawCap(GuiGraphicsExtractor g, KeyboardShape.Cap c, int x0, int y0, int x1, int y1, Layer view, boolean hover, float cs) {
+    /** True when the mouse is over any rectangle of this key (the ISO Enter has two). */
+    private boolean hover(String key, int mouseX, int mouseY) {
+        for (KeyboardShape.Cap c : caps) {
+            if (!c.key().equals(key)) continue;
+            int x0 = kbX + Math.round(c.x() * unit), y0 = kbY + Math.round(c.y() * unit);
+            int x1 = kbX + Math.round((c.x() + c.w()) * unit) - 1, y1 = kbY + Math.round((c.y() + c.h()) * unit) - 1;
+            if (KeyboardShape.WHEEL.equals(key)) x0 -= 1;
+            if (mouseX >= x0 && mouseX < x1 && mouseY >= y0 - 1 && mouseY < y1) return true;
+        }
+        return false;
+    }
+
+    /**
+     * One size for every key's label: the usual one, or smaller when a label would not fit its key (the mouse
+     * wheel's "Wheel" on one key width), the same for all keys.
+     */
+    private float labelScaleFor(float cs) {
+        float s = cs;
+        for (KeyboardShape.Cap c : caps) {
+            int w = Math.round((c.x() + c.w()) * unit) - Math.round(c.x() * unit) - 1 - 3;
+            int text = font.width(Labels.keyLabel(c.key()));
+            if (text > 0 && w > 0) s = Math.min(s, w / (float) text);
+        }
+        return Math.max(cs * 0.6f, s);
+    }
+
+    /** Draws one rectangle of a key and returns its fill colour; {@code text}: false for the ISO Enter's lower part. */
+    private int drawCap(GuiGraphicsExtractor g, KeyboardShape.Cap c, int x0, int y0, int x1, int y1, Layer view, boolean hover, float cs, boolean text) {
         List<Entry> all = on(c.key(), view);
         boolean conflict = isConflict(c.key(), view);
         List<Entry> here = conflictsOnly && !conflict ? List.of() : filtered(all);
@@ -473,6 +508,7 @@ public class KeycapsScreen extends Screen {
         g.fill(x0, y0, x1, y1, fill);
         int border = hover ? 0xFFFFFFFF : conflict && !here.isEmpty() ? 0xFFE0453A : heldModifier ? 0xFFE8C34A : 0x50000000;
         g.outline(x0, y0, x1 - x0, y1 - y0, border);
+        if (!text) return fill;
 
         // key label, top left
         int innerPx = x1 - x0 - 3;
@@ -503,6 +539,7 @@ public class KeycapsScreen extends Screen {
             }
             Compat.pop(g);
         }
+        return fill;
     }
 
     private String lastLineText(String caption, List<FormattedCharSequence> lines, int index) {

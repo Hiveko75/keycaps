@@ -31,6 +31,12 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   key's binding: hotbar and looking around, Leawind's camera distance and offset (Adjust Camera), Fly Speed
   Modifier's flight speed, Scroll-Walk's walking speed, Zoomify's zoom level. Without the keypad the three
   buttons stay under Delete / End / Page Down and the wheel and movement are listed under "Elsewhere".
+- **Key labels** are one size on every key, a little smaller when one would not fit its key ("Wheel", "Közép").
+- **ISO Enter** is drawn as one key (the wide upper part and the narrower lower part without a line between
+  them, its name once).
+- **Keyboard: Auto** on Windows follows the keyboard layout in use (Hungarian → ISO with the Í key, US → ANSI),
+  whatever the game's language; elsewhere as before. Resource pack variants of a language (Colourful
+  Containers' "en_us-showtext") count as that language.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions

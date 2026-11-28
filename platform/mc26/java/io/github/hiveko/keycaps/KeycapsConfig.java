@@ -45,12 +45,14 @@ public final class KeycapsConfig {
     }
 
     /**
-     * The shape to draw: the configured one, or a guess. The country comes from the game's language when it
-     * is not American English (hu_hu → HU), else from the computer's regional format (Windows: Region), else
-     * from its display language; Windows in English with a Hungarian keyboard still gets ISO that way.
+     * The shape to draw: the configured one, or a guess. On Windows the keyboard layout in use decides
+     * (Hungarian → ISO, US → ANSI). Otherwise the country comes from the game's language when it is not
+     * American English (hu_hu → HU), else from the computer's regional format, else from its display language.
      */
     public static Shape effectiveShape() {
         if (shape != Shape.AUTO) return shape;
+        Shape fromLayout = windowsLayoutShape();
+        if (fromLayout != null) return fromLayout;
         String country = countryOf(gameLanguage());
         if (country.isEmpty()) country = Locale.getDefault(Locale.Category.FORMAT).getCountry();
         if (country.isEmpty()) country = Locale.getDefault().getCountry();
@@ -66,12 +68,48 @@ public final class KeycapsConfig {
         }
     }
 
-    /** "hu_hu" → "HU"; "" for American English (also the game's default, so it says nothing). */
+    /**
+     * "hu_hu" → "HU"; "" for American English (also the game's default, so it says nothing). Resource pack
+     * variants of a language ("en_us-showtext" from Colourful Containers) count as that language.
+     */
     private static String countryOf(String language) {
         if (language == null) return "";
+        int dash = language.indexOf('-');
+        if (dash > 0) language = language.substring(0, dash);
         int i = language.indexOf('_');
         if (i < 0 || language.equalsIgnoreCase("en_us")) return "";
         return language.substring(i + 1).toUpperCase(Locale.ROOT);
+    }
+
+    /** Windows keyboard layouts (language ids) whose keyboards are ANSI-shaped; every other one is ISO. */
+    private static final Set<Integer> ANSI_LAYOUTS = Set.of(
+            0x0409, 0x1009, 0x0C09, 0x1409, 0x4009, 0x3409, 0x4809, 0x4409); // English: US, CA, AU, NZ, IN, PH, SG, MY
+    /** Primary languages whose keyboards are ANSI-shaped (Chinese, Japanese, Korean, Thai, Hebrew, Vietnamese …). */
+    private static final Set<Integer> ANSI_LANGUAGES = Set.of(0x04, 0x11, 0x12, 0x1E, 0x0D, 0x2A, 0x21, 0x3E);
+
+    /**
+     * The shape from the Windows keyboard layout in use (GetKeyboardLayout through JNA, which Minecraft ships),
+     * or null when it can't be read (not Windows, no JNA). The layout id is the high word of the HKL unless it is
+     * a special id (0xF…), then the low word (the input language).
+     */
+    private static Shape windowsLayoutShape() {
+        if (!System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")) return null;
+        try {
+            Class<?> user32 = Class.forName("com.sun.jna.platform.win32.User32");
+            Object instance = user32.getField("INSTANCE").get(null);
+            Object hkl = user32.getMethod("GetKeyboardLayout", int.class).invoke(instance, 0);
+            if (hkl == null) return null;
+            Object pointer = hkl.getClass().getMethod("getPointer").invoke(hkl);
+            Class<?> pointerClass = Class.forName("com.sun.jna.Pointer");
+            long value = (long) pointerClass.getMethod("nativeValue", pointerClass).invoke(null, pointer);
+            int layout = (int) ((value >>> 16) & 0xFFFF);
+            if (layout == 0 || (layout & 0xF000) == 0xF000) layout = (int) (value & 0xFFFF);
+            if (layout == 0) return null;
+            if (ANSI_LAYOUTS.contains(layout) || ANSI_LANGUAGES.contains(layout & 0x3FF)) return Shape.ANSI;
+            return Shape.ISO;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     public static void setShape(Shape s) {
