@@ -11,7 +11,8 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
   mod it comes from. Actions that clash on the same key show in red.
 - **Hover text:** with Smart on, only the key's actions and the mod they come from ("Pick Block
   Litematica"). With Smart off it also says when an action works ("in menus"), its notes ("Works only
-  while … is on", "Hold … too") and the click hints.
+  while … is on", "Hold … too") and the click hints. With Smart on, the debug combinations (F3 +) are
+  only listed and shown on the keys while the F3 + tab is selected or F3 is held.
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions

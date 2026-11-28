@@ -519,6 +519,11 @@ public class KeycapsScreen extends Screen {
         return out;
     }
 
+    /** With Smart on, the debug combinations (F3 +) only show while the F3 + layer is shown. */
+    private static boolean hidden(Layer l, Layer view) {
+        return l == Layer.F3 && view != Layer.F3 && KeycapsConfig.smartConflicts();
+    }
+
     private boolean hasOtherLayers(String key) {
         return firstOtherLayer(key) != null;
     }
@@ -526,7 +531,7 @@ public class KeycapsScreen extends Screen {
     /** The first action on this key in another layer (that the colour filter lets through), or null. */
     private Entry firstOtherLayer(String key) {
         for (Layer l : layers) {
-            if (l == Layer.NORMAL) continue;
+            if (l == Layer.NORMAL || hidden(l, Layer.NORMAL)) continue;
             List<Entry> e = filtered(on(key, l));
             if (!e.isEmpty()) return e.get(0);
         }
@@ -581,6 +586,7 @@ public class KeycapsScreen extends Screen {
                 .sorted(Map.Entry.comparingByKey()).forEach(e -> sorted.put(e.getKey(), e.getValue()));
         for (Map.Entry<String, Map<Layer, List<Entry>>> k : sorted.entrySet()) {
             for (Layer l : layers) {
+                if (hidden(l, view())) continue;
                 for (Entry e : k.getValue().getOrDefault(l, List.of())) {
                     out.add(Component.empty().append(prefix(l)).append(Labels.keyName(k.getKey())).append(": ")
                             .append(e.name()).append(Component.literal("  " + e.source().getString()).withStyle(ChatFormatting.DARK_GRAY)));
@@ -669,7 +675,9 @@ public class KeycapsScreen extends Screen {
         List<Component> out = new ArrayList<>();
         out.add(Labels.keyName(key).copy().withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD));
         boolean any = false;
+        Layer shown = view();
         for (Layer l : layers) {
+            if (hidden(l, shown)) continue;
             List<Entry> list = on(key, l);
             Set<String> clash = clashingIds(key, l);
             for (Entry e : list) {
