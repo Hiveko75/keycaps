@@ -131,6 +131,8 @@ public class KeycapsScreen extends Screen {
         caps = KeyboardShape.caps(KeycapsConfig.effectiveShape() == KeycapsConfig.Shape.ISO, numpad);
         capKeys.clear();
         for (KeyboardShape.Cap c : caps) capKeys.add(c.key());
+        // above the keypad the mouse has its movement frame; without the keypad movement is listed "elsewhere"
+        if (capKeys.contains(KeyboardShape.WHEEL)) capKeys.add(KeyboardShape.MOVE);
 
         // tabs: one per modifier layer; the plain keys are shown when none is selected
         tabs.clear();
@@ -327,10 +329,12 @@ public class KeycapsScreen extends Screen {
         for (KeyboardShape.Cap c : caps) {
             int x0 = kbX + Math.round(c.x() * unit), y0 = kbY + Math.round(c.y() * unit);
             int x1 = kbX + Math.round((c.x() + c.w()) * unit) - 1, y1 = kbY + Math.round((c.y() + c.h()) * unit) - 1;
+            if (KeyboardShape.WHEEL.equals(c.key())) x0 -= 1; // joined to the middle button: one double button
             boolean hover = mouseX >= x0 && mouseX < x1 && mouseY >= y0 && mouseY < y1;
             if (hover) hoveredKey = c.key();
             drawCap(g, c, x0, y0, x1, y1, view, hover, cs);
         }
+        drawMouseFrame(g, view, mouseX, mouseY);
         drawElsewhere(g, view, mouseX, mouseY, cs);
         drawLegend(g, view, cs, mouseX, mouseY);
         updateConflictsButton(view);
@@ -349,6 +353,48 @@ public class KeycapsScreen extends Screen {
                     Component.translatable(hoveredLegend.equals(filterGroup) ? "keycaps.tooltip.legend.off" : "keycaps.tooltip.legend")
                             .withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
         }
+    }
+
+    /**
+     * Mouse movement: a frame around the mouse buttons above the keypad, in the colour of what moving the mouse
+     * does on the layer shown (grey when it only looks around), its action written under it. Hovering the frame
+     * (not a button) shows its actions like a key's.
+     */
+    private void drawMouseFrame(GuiGraphicsExtractor g, Layer view, int mouseX, int mouseY) {
+        KeyboardShape.Cap first = null, last = null;
+        for (KeyboardShape.Cap c : caps) {
+            if (c.key().equals("key.mouse.left")) first = c;
+            if (c.key().equals("key.mouse.right")) last = c;
+        }
+        if (first == null || last == null || first.y() > 0) return; // no keypad: movement is listed "elsewhere"
+        int m = Math.max(2, unit / 10);
+        int x0 = kbX + Math.round(first.x() * unit) - m, y0 = kbY + Math.round(first.y() * unit) - m;
+        int x1 = kbX + Math.round((last.x() + last.w()) * unit) - 1 + m, y1 = kbY + Math.round((last.y() + last.h()) * unit) - 1 + m;
+        boolean inside = mouseX >= x0 && mouseX < x1 && mouseY >= y0 && mouseY < y1;
+        if (inside && hoveredKey == null) hoveredKey = KeyboardShape.MOVE;
+        boolean hover = KeyboardShape.MOVE.equals(hoveredKey);
+
+        Entry e = shownEntry(KeyboardShape.MOVE, view);
+        boolean active = e != null && !e.when().contains(Situations.OFF);
+        boolean conflict = isConflict(KeyboardShape.MOVE, view);
+        int color = hover ? 0xFFFFFFFF : conflict && e != null ? 0xFFE0453A
+                : active ? (Groups.color(e.group()) | 0xFF000000) : 0x60FFFFFF;
+        int w = active || hover ? 2 : 1;
+        g.fill(x0, y0, x1, y0 + w, color);
+        g.fill(x0, y1 - w, x1, y1, color);
+        g.fill(x0, y0, x0 + w, y1, color);
+        g.fill(x1 - w, y0, x1, y1, color);
+        if (e == null) return;
+        // what moving the mouse does, in the gap under the frame
+        String caption = Labels.keyLabel(KeyboardShape.MOVE) + ": "
+                + (e.layer() != view ? shortLayer(e.layer()) + " " : "") + Labels.caption(e);
+        float fs = functionScale();
+        int maxW = (int) ((x1 - x0) / fs);
+        Compat.push(g);
+        Compat.translate(g, x0 + 1, y1 + 2);
+        Compat.scale(g, fs);
+        g.text(font, ellipsize(caption, maxW), 0, 0, active ? TEXT_DIM : TEXT_FAINT, false);
+        Compat.pop(g);
     }
 
     /** The key's own label is drawn a little smaller: one screen pixel less per font pixel than the GUI scale. */

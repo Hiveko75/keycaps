@@ -20,12 +20,15 @@ final class Labels {
     static String keyLabel(String keyName) {
         String k = "keycaps.cap." + keyName;
         if (Language.getInstance().has(k)) return Component.translatable(k).getString();
+        if (keyName.startsWith("keycaps.")) return keyName(keyName).getString();
         String s = InputConstants.getKey(keyName).getDisplayName().getString();
         return s.length() <= 4 ? s : s.substring(0, 3) + ".";
     }
 
     /** The full name of a key, for the hover text. */
     static Component keyName(String keyName) {
+        // the mouse wheel and mouse movement are not keys: their names come from Keycaps' language file
+        if (keyName.startsWith("keycaps.")) return Component.translatable("keycaps.keyname." + keyName);
         return InputConstants.getKey(keyName).getDisplayName();
     }
 

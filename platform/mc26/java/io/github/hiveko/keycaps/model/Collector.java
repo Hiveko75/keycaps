@@ -140,9 +140,27 @@ public final class Collector {
             Set<String> when = off != null ? Situations.SWITCHED_OFF : Situations.of(rule, Situations.IN_WORLD);
             String group = Groups.groupOf(f.id(), f.mod());
             rememberShares(f.id(), rule);
+            if (f.whileHeld() != null) {
+                // the wheel or mouse movement while another binding's key is held (Leawind's Adjust Camera):
+                // a Ctrl / Alt / Shift key gives that layer (its side), any other key its own "X +" layer
+                KeyMapping held = null;
+                for (KeyMapping km : o.keyMappings) if (km.getName().equals(f.whileHeld())) held = km;
+                if (held == null || held.isUnbound()) continue;
+                String heldKey = KeyMappingHelper.getBoundKeyOf(held).getName();
+                for (String key : f.keys()) {
+                    if (Layer.ofModifier(heldKey) != null) {
+                        addWithModifiers(out, key, List.of(heldKey), f.id(), name, source, group, when, off);
+                    } else {
+                        out.add(new Entry(Layer.hold(heldKey), key, f.id(), name, source, group, off, when));
+                    }
+                }
+                continue;
+            }
             if (f.with() == null) {
                 for (String key : f.keys()) {
-                    addWithModifiers(out, key, withAdded(List.of(), rule), f.id(), name, source, group, when, note);
+                    // the wheel and mouse movement are no key bindings anywhere: no "fixed in" note for them
+                    Component n = KeyboardShape.isMouseExtra(key) ? off : note;
+                    addWithModifiers(out, key, withAdded(List.of(), rule), f.id(), name, source, group, when, n);
                 }
                 continue;
             }

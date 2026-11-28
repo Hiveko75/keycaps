@@ -26,6 +26,11 @@ First version, for Minecraft 26.3, 26.2, 26.1.2, 1.21.11 and 1.21.1.
 - **Keyboard: Auto** picks ISO (with the extra key next to left Shift, Í on Hungarian keyboards) from the game's
   language (hu_hu → Hungary) or the computer's region format, not only from the display language: Windows
   in English with a Hungarian keyboard showed ANSI and had no Í key.
+- **Mouse above the keypad:** left, middle and wheel (one double button: click and scroll), right, with a frame
+  around them for mouse movement. The wheel and movement show what they do on each layer, following the held
+  key's binding: hotbar and looking around, Leawind's camera distance and offset (Adjust Camera), Fly Speed
+  Modifier's flight speed, Scroll-Walk's walking speed, Zoomify's zoom level. Without the keypad the three
+  buttons stay under Delete / End / Page Down and the wheel and movement are listed under "Elsewhere".
 - **Layers:** tabs for Ctrl +, Alt +, Shift + (when used) and the debug key (F3 +); with no tab selected the
   map shows the keys without a modifier, and clicking the selected tab again goes back there. Holding the
   real Ctrl, Alt, Shift or F3 key shows that layer; holding the left or the right one shows only the actions

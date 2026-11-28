@@ -71,7 +71,7 @@ public final class Situations {
      *                 version of the mod made it a key binding), so this entry is left out; or null
      */
     public record Fixed(String id, String mod, String name, String fallback, List<String> keys, String with, Rule rule,
-                        String unless) {}
+                        String unless, String whileHeld) {}
 
     /** The fixed keys from the last {@link #load()}. */
     public static List<Fixed> fixed() {
@@ -114,7 +114,8 @@ public final class Situations {
                             o.has("name") ? o.get("name").getAsString() : o.get("id").getAsString(),
                             o.has("fallback") ? o.get("fallback").getAsString() : o.get("id").getAsString(),
                             strings(o, "key"), o.has("with") ? o.get("with").getAsString() : null, rule,
-                            o.has("unless") ? o.get("unless").getAsString() : null));
+                            o.has("unless") ? o.get("unless").getAsString() : null,
+                            o.has("while") ? o.get("while").getAsString() : null));
                 } catch (Exception e) {
                     Keycaps.LOGGER.warn("Skipping a fixed key that is not valid: {}", r, e);
                 }

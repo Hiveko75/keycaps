@@ -6,8 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A full-size keyboard (ANSI or ISO) in key units, the numeric keypad optional, with the three mouse
- * buttons in the empty spot under Delete / End / Page Down. Keys are named by Minecraft's key names
+ * A full-size keyboard (ANSI or ISO) in key units, the numeric keypad optional. The mouse sits above the keypad
+ * (left, middle and wheel as one double button, right; a frame around them for mouse movement); without the
+ * keypad its three buttons go to the empty spot under Delete / End / Page Down. Keys are named by Minecraft's key names
  * ({@code key.keyboard.q}), which stand for physical positions; the letter printed on each key comes from
  * the player's keyboard layout.
  */
@@ -19,6 +20,17 @@ public final class KeyboardShape {
     public static final float WIDTH = 18.25f;
     public static final float WIDTH_NUMPAD = 22.5f;
     public static final float HEIGHT = 6.5f;
+
+    /**
+     * Not keys: the mouse wheel (shown joined to the middle button) and mouse movement (a frame around the mouse
+     * buttons). Their actions come from {@code situations.json} ("fixed" entries), as no key binding names them.
+     */
+    public static final String WHEEL = "keycaps.mouse.wheel";
+    public static final String MOVE = "keycaps.mouse.move";
+
+    public static boolean isMouseExtra(String key) {
+        return WHEEL.equals(key) || MOVE.equals(key);
+    }
 
     /** The extra ISO key next to left Shift (SDL "non-US backslash"); Minecraft 26.3 names it world.1. */
     public static final String ISO_EXTRA = Compat.ISO_EXTRA;
@@ -72,9 +84,12 @@ public final class KeyboardShape {
         } else {
             add(c, "enter", 12.75f, y, 2.25f);
         }
-        c.add(new Cap("key.mouse.left", 15.25f, y, 1, 1));
-        c.add(new Cap("key.mouse.middle", 16.25f, y, 1, 1));
-        c.add(new Cap("key.mouse.right", 17.25f, y, 1, 1));
+        if (!numpad) {
+            // no room above the keypad: the buttons under Delete / End / Page Down, wheel and movement "elsewhere"
+            c.add(new Cap("key.mouse.left", 15.25f, y, 1, 1));
+            c.add(new Cap("key.mouse.middle", 16.25f, y, 1, 1));
+            c.add(new Cap("key.mouse.right", 17.25f, y, 1, 1));
+        }
         // bottom letter row
         y = 4.5f;
         if (iso) {
@@ -104,9 +119,14 @@ public final class KeyboardShape {
         return c;
     }
 
-    /** The numeric keypad, right of the arrow keys. */
+    /** The numeric keypad, right of the arrow keys, with the mouse above it in the function row. */
     private static void numpad(List<Cap> c) {
         float x = 18.5f;
+        // the mouse: left, middle + wheel (one double button), right; the movement frame goes around them
+        c.add(new Cap("key.mouse.left", x, 0, 1, 1));
+        c.add(new Cap("key.mouse.middle", x + 1, 0, 1, 1));
+        c.add(new Cap(WHEEL, x + 2, 0, 1, 1));
+        c.add(new Cap("key.mouse.right", x + 3, 0, 1, 1));
         add(c, "num.lock", x, 1.5f, 1);
         add(c, "keypad.divide", x + 1, 1.5f, 1);
         add(c, "keypad.multiply", x + 2, 1.5f, 1);

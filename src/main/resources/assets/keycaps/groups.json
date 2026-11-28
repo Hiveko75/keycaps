@@ -17,6 +17,8 @@
     {"id": "axiom", "color": "#E0457B", "row": 2}
   ],
   "rules": [
+    {"group": "items", "match": "^minecraft:hotbar_scroll"},
+    {"group": "camera", "match": "^minecraft:look"},
     {"group": "litematica", "match": "^litematica:"},
     {"group": "tweakeroo", "match": "^tweakeroo:"},
     {"group": "minihud", "match": "^minihud:"},
