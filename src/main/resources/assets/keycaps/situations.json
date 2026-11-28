@@ -16,6 +16,7 @@
     {"match": "^key\\.(drop|swapoffhand) ", "when": ["world", "menu"]},
     {"match": "^key\\.(screenshot|fullscreen) ", "when": ["world", "menu", "chat"]},
     {"match": "^key\\.jade\\.show_details", "when": ["passive"]},
+    {"match": "^key\\.fly-speed-modifier\\.adjust_speed ", "when": ["flying"]},
     {"match": "^key\\.debug\\.crash ", "when": ["hold_10s"]},
     {"match": "^key\\.clientsort\\.(op\\.|cancelauto)", "when": ["menu"]},
     {"match": "^key\\.lockedinslots\\.", "when": ["menu"]},
